@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pencil, X } from "lucide-react";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 export function CertificationForm() {
   const { addCertification, updateCertification, certifications, deleteCertification, skills, projects } =
@@ -26,7 +27,6 @@ export function CertificationForm() {
     project_ids: [],
   });
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,34 +110,20 @@ export function CertificationForm() {
             </div>
 
             <div>
-              <Label htmlFor="featured_image_cert">Featured Image URL *</Label>
-              <Input
-                id="featured_image_cert"
-                type="url"
+              <Label htmlFor="featured_image_cert">Certificate Image *</Label>
+              <ImageUpload
                 value={formData.featured_image}
-                onChange={(e) =>
-                  setFormData({ ...formData, featured_image: e.target.value })
-                }
-                onBlur={(e) => {
-                  const url = e.target.value.trim();
-                  setImagePreview(url || null);
+                onChange={(url, publicId) => {
+                  setFormData({ ...formData, featured_image: url });
                 }}
-                placeholder="https://res.cloudinary.com/..."
-                required
+                onDelete={() => {
+                  setFormData({ ...formData, featured_image: "" });
+                }}
+                folder="portfolio/certifications"
+                publicIdPrefix={formData.title ? `cert_${formData.title.toLowerCase().replace(/\s+/g, '_')}` : "certification"}
+                aspectRatio="16:9"
+                maxSize={5}
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Upload certificate/badge image to Cloudinary
-              </p>
-              {imagePreview && (
-                <div className="mt-2 p-2 border rounded-md bg-muted/50">
-                  <img
-                    src={imagePreview}
-                    alt="Certificate preview"
-                    className="max-h-48 w-auto rounded"
-                    onError={() => setImagePreview(null)}
-                  />
-                </div>
-              )}
             </div>
 
             <div>

@@ -2,32 +2,42 @@
 
 ## 🔥 Current Sprint: Cloudinary Integration
 
-### Priority 1 - Image Upload Infrastructure
-- [ ] Install and configure Cloudinary packages
-- [ ] Set up Cloudinary credentials in `.env.local`
-- [ ] Create reusable image upload component
-- [ ] Implement signed upload for security
-- [ ] Add upload progress indicator
-- [ ] Handle upload errors gracefully
+### Priority 1 - Image Upload Infrastructure ✅ COMPLETED
+- [x] Install and configure Cloudinary packages
+- [x] Set up Cloudinary credentials in `.env.local`
+- [x] Create reusable image upload component
+- [x] Implement signed upload API route for security
+- [x] Add upload progress indicator
+- [x] Handle upload errors gracefully
 
-### Priority 2 - Bio Form Images
-- [ ] Add avatar upload to Bio form
-- [ ] Display uploaded avatar preview
-- [ ] Allow avatar replacement
-- [ ] Store Cloudinary public_id in state
-- [ ] Add image deletion functionality
+### Priority 2 - Bio Form Images ✅ COMPLETED
+- [x] Add avatar upload to Bio form
+- [x] Display uploaded avatar preview
+- [x] Allow avatar replacement
+- [x] Store Cloudinary public_id in state
+- [x] Add image deletion functionality
+- [x] Auto-naming: `avatar_timestamp`
+- [x] Three upload methods (Upload, URL, Library)
+- [x] Cloudinary image library browser with search
 
-### Priority 3 - Project Images
-- [ ] Add featured image upload to Project form
+### Priority 3 - Project Images ✅ COMPLETED
+- [x] Add featured image upload to Project form
+- [x] Auto-naming based on project slug: `project_slug_timestamp`
+- [x] Show image preview in upload component
+- [x] Three upload methods (Upload, URL, Library)
+- [x] Image library modal with search
 - [ ] Implement multiple image gallery upload
 - [ ] Add image reordering functionality
-- [ ] Show image thumbnails in project cards
 - [ ] Add alt text support for images
 
-### Priority 4 - Certification Images
-- [ ] Add featured image upload to Certification form
-- [ ] Implement optional image gallery
-- [ ] Display featured image in certification cards
+### Priority 4 - Certification & Skill Images ✅ COMPLETED
+- [x] Add featured image upload to Certification form
+- [x] Auto-naming: `cert_title_timestamp`
+- [x] Add skill logo upload to Skill form
+- [x] Auto-naming: `skill_name_timestamp`
+- [x] Three upload methods for all forms
+- [x] Cloudinary image library integration
+- [ ] Implement optional image gallery for certifications
 
 ---
 

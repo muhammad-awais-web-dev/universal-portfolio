@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 export function BioForm() {
   const { profile, updateProfile } = usePortfolio();
@@ -25,7 +26,6 @@ export function BioForm() {
     instagram: "",
     youtube: "",
   });
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -44,7 +44,6 @@ export function BioForm() {
         instagram: profile.instagram || "",
         youtube: profile.youtube || "",
       });
-      setAvatarPreview(profile.avatar_url || null);
     }
   }, [profile]);
 
@@ -101,30 +100,20 @@ export function BioForm() {
               </div>
 
               <div>
-                <Label htmlFor="avatar_url">Avatar URL</Label>
-                <Input
-                  id="avatar_url"
-                  type="url"
+                <Label htmlFor="avatar">Avatar Image</Label>
+                <ImageUpload
                   value={formData.avatar_url}
-                  onChange={(e) =>
-                    setFormData({ ...formData, avatar_url: e.target.value })
-                  }
-                  onBlur={(e) => {
-                    const url = e.target.value.trim();
-                    setAvatarPreview(url || null);
+                  onChange={(url, publicId) => {
+                    setFormData({ ...formData, avatar_url: url });
                   }}
-                  placeholder="https://example.com/avatar.jpg"
+                  onDelete={() => {
+                    setFormData({ ...formData, avatar_url: "" });
+                  }}
+                  folder="portfolio/avatars"
+                  publicIdPrefix="avatar"
+                  aspectRatio="1:1"
+                  maxSize={5}
                 />
-                {avatarPreview && (
-                  <div className="mt-2 p-2 border rounded-md bg-muted/50">
-                    <img
-                      src={avatarPreview}
-                      alt="Avatar preview"
-                      className="w-24 h-24 rounded-full object-cover"
-                      onError={() => setAvatarPreview(null)}
-                    />
-                  </div>
-                )}
               </div>
             </div>
 

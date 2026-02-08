@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, X, Pencil } from "lucide-react";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 export function SkillForm() {
   const { addSkill, updateSkill, skills, deleteSkill, skillCategories, addSkillCategory } = usePortfolio();
@@ -22,7 +23,6 @@ export function SkillForm() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,28 +190,20 @@ export function SkillForm() {
             </div>
 
             <div>
-              <Label htmlFor="logo_url">Logo URL (optional)</Label>
-              <Input
-                id="logo_url"
-                type="url"
+              <Label htmlFor="logo_url">Skill Logo (optional)</Label>
+              <ImageUpload
                 value={formData.logo_url}
-                onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                onBlur={(e) => {
-                  const url = e.target.value.trim();
-                  setLogoPreview(url || null);
+                onChange={(url, publicId) => {
+                  setFormData({ ...formData, logo_url: url });
                 }}
-                placeholder="https://example.com/logo.png"
+                onDelete={() => {
+                  setFormData({ ...formData, logo_url: "" });
+                }}
+                folder="portfolio/skills"
+                publicIdPrefix={formData.name ? `skill_${formData.name.toLowerCase().replace(/\s+/g, '_')}` : "skill"}
+                aspectRatio="1:1"
+                maxSize={2}
               />
-              {logoPreview && (
-                <div className="mt-2 p-2 border rounded-md bg-muted/50">
-                  <img
-                    src={logoPreview}
-                    alt="Logo preview"
-                    className="h-12 w-12 object-contain"
-                    onError={() => setLogoPreview(null)}
-                  />
-                </div>
-              )}
             </div>
 
             <div>

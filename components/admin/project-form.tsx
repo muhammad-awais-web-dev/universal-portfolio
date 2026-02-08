@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, X, Pencil } from "lucide-react";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 export function ProjectForm() {
   const { addProject, updateProject, projects, deleteProject, skills, projectCategories, addProjectCategory } = usePortfolio();
@@ -28,7 +29,6 @@ export function ProjectForm() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,34 +164,20 @@ export function ProjectForm() {
             </div>
 
             <div>
-              <Label htmlFor="featured_image">Featured Image URL *</Label>
-              <Input
-                id="featured_image"
-                type="url"
+              <Label htmlFor="featured_image">Featured Image *</Label>
+              <ImageUpload
                 value={formData.featured_image}
-                onChange={(e) =>
-                  setFormData({ ...formData, featured_image: e.target.value })
-                }
-                onBlur={(e) => {
-                  const url = e.target.value.trim();
-                  setImagePreview(url || null);
+                onChange={(url, publicId) => {
+                  setFormData({ ...formData, featured_image: url });
                 }}
-                placeholder="https://res.cloudinary.com/..."
-                required
+                onDelete={() => {
+                  setFormData({ ...formData, featured_image: "" });
+                }}
+                folder="portfolio/projects"
+                publicIdPrefix={formData.slug ? `project_${formData.slug}` : "project"}
+                aspectRatio="16:9"
+                maxSize={10}
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Upload to Cloudinary and paste the URL here
-              </p>
-              {imagePreview && (
-                <div className="mt-2 p-2 border rounded-md bg-muted/50">
-                  <img
-                    src={imagePreview}
-                    alt="Featured image preview"
-                    className="max-h-48 w-auto rounded"
-                    onError={() => setImagePreview(null)}
-                  />
-                </div>
-              )}
             </div>
 
             <div>
