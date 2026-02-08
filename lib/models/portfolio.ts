@@ -20,6 +20,12 @@ export interface Profile {
   updated_at?: string;
 }
 
+export interface ProjectCategory {
+  id: number;
+  name: string;
+  created_at?: string;
+}
+
 export interface Project {
   id: number;
   owner_id: string;
@@ -27,6 +33,7 @@ export interface Project {
   slug: string;
   short_description?: string;
   description?: string;
+  body_html?: string; // Rich HTML content for detailed project description
   live_url?: string;
   repo_url?: string;
   featured_image: string; // Required featured image URL
@@ -35,6 +42,7 @@ export interface Project {
   created_at?: string;
   updated_at?: string;
   // Relationships
+  category_ids?: number[]; // Project categories
   skill_ids?: number[]; // Selected skills for this project
   images?: ProjectImage[]; // Additional optional images
 }
@@ -52,11 +60,18 @@ export interface ProjectImage {
   created_at?: string;
 }
 
+export interface SkillCategory {
+  id: number;
+  name: string;
+  created_at?: string;
+}
+
 export interface Skill {
   id: number;
   name: string;
-  category?: string;
+  category_ids?: number[]; // Multiple categories
   logo_url?: string;
+  body_html?: string; // Rich HTML content for skill description/details
   created_at?: string;
 }
 
@@ -75,6 +90,7 @@ export interface Certification {
   expiration_date?: string | null;
   featured_image: string; // Required featured image URL
   is_active?: boolean; // Currently active/valid
+  body_html?: string; // Rich HTML content for certification details
   created_at?: string;
   // Relationships
   skill_ids?: number[]; // Skills related to this certification
@@ -93,6 +109,7 @@ export interface Education {
   is_current?: boolean; // Currently studying
   grade?: string;
   description?: string;
+  body_html?: string; // Rich HTML content for education details
   created_at?: string;
   // Relationships
   skill_ids?: number[]; // Skills learned/applied
@@ -108,6 +125,7 @@ export interface Experience {
   end_date?: string | null;
   location?: string;
   description?: string;
+  body_html?: string; // Rich HTML content for detailed role description
   is_current?: boolean;
   created_at?: string;
   // Relationships
@@ -122,3 +140,5 @@ export type CertificationFormData = Omit<Certification, 'id' | 'profile_id' | 'c
 export type EducationFormData = Omit<Education, 'id' | 'profile_id' | 'created_at'>;
 export type ExperienceFormData = Omit<Experience, 'id' | 'profile_id' | 'created_at'>;
 export type ProfileFormData = Omit<Profile, 'id' | 'created_at' | 'updated_at'>;
+export type SkillCategoryFormData = Omit<SkillCategory, 'id' | 'created_at'>;
+export type ProjectCategoryFormData = Omit<ProjectCategory, 'id' | 'created_at'>;

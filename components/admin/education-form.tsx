@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Pencil, X } from "lucide-react";
 
 export function EducationForm() {
-  const { addEducation, education, deleteEducation, skills, projects } = usePortfolio();
+  const { addEducation, updateEducation, education, deleteEducation, skills, projects } = usePortfolio();
   const [formData, setFormData] = useState<EducationFormData>({
     institution: "",
     degree: "",
@@ -20,9 +21,11 @@ export function EducationForm() {
     is_current: false,
     grade: "",
     description: "",
+    body_html: "",
     skill_ids: [],
     project_ids: [],
   });
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +33,12 @@ export function EducationForm() {
       alert("Institution is required");
       return;
     }
-    addEducation(formData);
+    if (editingId) {
+      updateEducation(editingId, formData);
+      setEditingId(null);
+    } else {
+      addEducation(formData);
+    }
     setFormData({
       institution: "",
       degree: "",
@@ -40,16 +48,52 @@ export function EducationForm() {
       is_current: false,
       grade: "",
       description: "",
+      body_html: "",
       skill_ids: [],
       project_ids: [],
     });
+  };
+
+  const handleEdit = (edu: typeof education[0]) => {
+    setFormData({
+      institution: edu.institution,
+      degree: edu.degree || "",
+      field_of_study: edu.field_of_study || "",
+      start_date: edu.start_date || "",
+      end_date: edu.end_date || null,
+      is_current: edu.is_current,
+      grade: edu.grade || "",
+      description: edu.description || "",
+      body_html: edu.body_html || "",
+      skill_ids: edu.skill_ids || [],
+      project_ids: edu.project_ids || [],
+    });
+    setEditingId(edu.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleCancelEdit = () => {
+    setFormData({
+      institution: "",
+      degree: "",
+      field_of_study: "",
+      start_date: "",
+      end_date: null,
+      is_current: false,
+      grade: "",
+      description: "",
+      body_html: "",
+      skill_ids: [],
+      project_ids: [],
+    });
+    setEditingId(null);
   };
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Add New Education</CardTitle>
+          <CardTitle>{editingId ? "Edit Education" : "Add New Education"}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -142,16 +186,25 @@ export function EducationForm() {
             </div>
 
             <div>
-              <Label htmlFor="edu-description">Description</Label>
+              <Label htmlFor="edu_body_html">Body HTML</Label>
               <textarea
-                id="edu-description"
-                value={formData.description}
+                id="edu_body_html"
+                value={formData.body_html}
                 onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
+                  setFormData({ ...formData, body_html: e.target.value })
                 }
-                placeholder="Activities, coursework, achievements..."
-                className="w-full min-h-[80px] px-3 py-2 text-sm rounded-md border border-input bg-background"
+                placeholder="<p>Detailed education information with HTML...</p>"
+                className="w-full min-h-[120px] px-3 py-2 text-sm rounded-md border border-input bg-background font-mono"
               />
+              {formData.body_html && (
+                <div className="mt-2">
+                  <Label className="text-xs text-muted-foreground">Live Preview:</Label>
+                  <div
+                    className="mt-1 p-3 border rounded-md bg-muted/30 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: formData.body_html }}
+                  />
+                </div>
+              )}
             </div>
 
             <div>
@@ -218,9 +271,20 @@ export function EducationForm() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full">
-              Add Education
-            </Button>
+            <div className="flex gap-2">
+              <Button type="submit" className="flex-1">
+                {editingId ? "Update Education" : "Add Education"}
+              </Button>
+              {editingId && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
           </form>
         </CardContent>
       </Card>
@@ -240,7 +304,7 @@ export function EducationForm() {
               {education.map((edu) => (
                 <div
                   key={edu.id}
-                  className="flex items-start justify-between p-4 border rounded-lg"
+                  className="group relative flex items-start justify-between p-4 border rounded-lg hover:border-primary/50 transition-colors"
                 >
                   <div className="flex-1">
                     <h3 className="font-semibold">{edu.institution}</h3>
@@ -285,13 +349,24 @@ export function EducationForm() {
                       </p>
                     )}
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => deleteEducation(edu.id)}
-                  >
-                    Delete
-                  </Button>
+                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(edu)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteEducation(edu.id)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

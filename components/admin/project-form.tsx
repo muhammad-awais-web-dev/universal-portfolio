@@ -8,20 +8,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, X, Pencil } from "lucide-react";
 
 export function ProjectForm() {
-  const { addProject, projects, deleteProject, skills } = usePortfolio();
+  const { addProject, updateProject, projects, deleteProject, skills, projectCategories, addProjectCategory } = usePortfolio();
   const [formData, setFormData] = useState<ProjectFormData>({
     title: "",
     slug: "",
     short_description: "",
     description: "",
+    body_html: "",
     live_url: "",
     repo_url: "",
     featured_image: "",
     is_published: false,
     skill_ids: [],
+    category_ids: [],
   });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [showNewCategory, setShowNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,19 +36,87 @@ export function ProjectForm() {
       alert("Title, Slug, and Featured Image are required");
       return;
     }
-    addProject(formData);
+    if (editingId) {
+      updateProject(editingId, formData);
+      setEditingId(null);
+    } else {
+      addProject(formData);
+    }
     // Reset form
     setFormData({
       title: "",
       slug: "",
       short_description: "",
       description: "",
+      body_html: "",
       live_url: "",
       repo_url: "",
       featured_image: "",
       is_published: false,
       skill_ids: [],
+      category_ids: [],
     });
+    setImagePreview(null);
+  };
+
+  const handleEdit = (project: typeof projects[0]) => {
+    setFormData({
+      title: project.title,
+      slug: project.slug,
+      short_description: project.short_description || "",
+      description: project.description || "",
+      body_html: project.body_html || "",
+      live_url: project.live_url || "",
+      repo_url: project.repo_url || "",
+      featured_image: project.featured_image,
+      is_published: project.is_published,
+      skill_ids: project.skill_ids || [],
+      category_ids: project.category_ids || [],
+    });
+    setImagePreview(project.featured_image);
+    setEditingId(project.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleCancelEdit = () => {
+    setFormData({
+      title: "",
+      slug: "",
+      short_description: "",
+      description: "",
+      body_html: "",
+      live_url: "",
+      repo_url: "",
+      featured_image: "",
+      is_published: false,
+      skill_ids: [],
+      category_ids: [],
+    });
+    setImagePreview(null);
+    setEditingId(null);
+  };
+
+  const toggleCategory = (categoryId: number) => {
+    const currentIds = formData.category_ids || [];
+    if (currentIds.includes(categoryId)) {
+      setFormData({
+        ...formData,
+        category_ids: currentIds.filter((id) => id !== categoryId),
+      });
+    } else {
+      setFormData({
+        ...formData,
+        category_ids: [...currentIds, categoryId],
+      });
+    }
+  };
+
+  const handleAddNewCategory = () => {
+    if (newCategoryName.trim()) {
+      addProjectCategory({ name: newCategoryName.trim() });
+      setNewCategoryName("");
+      setShowNewCategory(false);
+    }
   };
 
   const generateSlug = () => {
@@ -56,7 +131,7 @@ export function ProjectForm() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Add New Project</CardTitle>
+          <CardTitle>{editingId ? "Edit Project" : "Add New Project"}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -97,12 +172,26 @@ export function ProjectForm() {
                 onChange={(e) =>
                   setFormData({ ...formData, featured_image: e.target.value })
                 }
+                onBlur={(e) => {
+                  const url = e.target.value.trim();
+                  setImagePreview(url || null);
+                }}
                 placeholder="https://res.cloudinary.com/..."
                 required
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Upload to Cloudinary and paste the URL here
               </p>
+              {imagePreview && (
+                <div className="mt-2 p-2 border rounded-md bg-muted/50">
+                  <img
+                    src={imagePreview}
+                    alt="Featured image preview"
+                    className="max-h-48 w-auto rounded"
+                    onError={() => setImagePreview(null)}
+                  />
+                </div>
+              )}
             </div>
 
             <div>
@@ -118,16 +207,25 @@ export function ProjectForm() {
             </div>
 
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="body_html">Body HTML</Label>
               <textarea
-                id="description"
-                value={formData.description}
+                id="body_html"
+                value={formData.body_html}
                 onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
+                  setFormData({ ...formData, body_html: e.target.value })
                 }
-                placeholder="Detailed project description..."
-                className="w-full min-h-[100px] px-3 py-2 text-sm rounded-md border border-input bg-background"
+                placeholder="<p>Detailed project description with HTML...</p>"
+                className="w-full min-h-[150px] px-3 py-2 text-sm rounded-md border border-input bg-background font-mono"
               />
+              {formData.body_html && (
+                <div className="mt-2">
+                  <Label className="text-xs text-muted-foreground">Live Preview:</Label>
+                  <div
+                    className="mt-1 p-3 border rounded-md bg-muted/30 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: formData.body_html }}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -150,6 +248,77 @@ export function ProjectForm() {
                   onChange={(e) => setFormData({ ...formData, repo_url: e.target.value })}
                   placeholder="https://github.com/username/repo"
                 />
+              </div>
+            </div>
+
+            <div>
+              <Label>Categories (select multiple)</Label>
+              <div className="border rounded-md p-4 space-y-2 mt-2">
+                {projectCategories.length === 0 && !showNewCategory && (
+                  <p className="text-sm text-muted-foreground">
+                    No categories yet. Add one below.
+                  </p>
+                )}
+                {projectCategories.map((category) => (
+                  <div key={category.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`proj-category-${category.id}`}
+                      checked={formData.category_ids?.includes(category.id)}
+                      onCheckedChange={() => toggleCategory(category.id)}
+                    />
+                    <Label
+                      htmlFor={`proj-category-${category.id}`}
+                      className="cursor-pointer font-normal"
+                    >
+                      {category.name}
+                    </Label>
+                  </div>
+                ))}
+                
+                {showNewCategory ? (
+                  <div className="flex items-center gap-2 pt-2">
+                    <Input
+                      placeholder="New category name"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddNewCategory();
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleAddNewCategory}
+                    >
+                      Add
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setShowNewCategory(false);
+                        setNewCategoryName("");
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowNewCategory(true)}
+                    className="w-full mt-2"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Category
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -198,9 +367,20 @@ export function ProjectForm() {
               </Label>
             </div>
 
-            <Button type="submit" className="w-full">
-              Add Project
-            </Button>
+            <div className="flex gap-2">
+              <Button type="submit" className="flex-1">
+                {editingId ? "Update Project" : "Add Project"}
+              </Button>
+              {editingId && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
           </form>
         </CardContent>
       </Card>
@@ -220,7 +400,7 @@ export function ProjectForm() {
               {projects.map((project) => (
                 <div
                   key={project.id}
-                  className="flex items-start gap-4 p-4 border rounded-lg"
+                  className="group relative flex items-start gap-4 p-4 border rounded-lg hover:border-primary/50 transition-colors"
                 >
                   {project.featured_image && (
                     <img
@@ -279,13 +459,24 @@ export function ProjectForm() {
                       )}
                     </div>
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => deleteProject(project.id)}
-                  >
-                    Delete
-                  </Button>
+                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(project)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteProject(project.id)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

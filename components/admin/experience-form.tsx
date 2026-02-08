@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Pencil, X } from "lucide-react";
 
 export function ExperienceForm() {
-  const { addExperience, experiences, deleteExperience, skills, projects } =
+  const { addExperience, updateExperience, experiences, deleteExperience, skills, projects } =
     usePortfolio();
   const [formData, setFormData] = useState<ExperienceFormData>({
     company: "",
@@ -19,10 +20,12 @@ export function ExperienceForm() {
     end_date: null,
     location: "",
     description: "",
+    body_html: "",
     is_current: false,
     skill_ids: [],
     project_ids: [],
   });
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +33,12 @@ export function ExperienceForm() {
       alert("Company and Job Title are required");
       return;
     }
-    addExperience(formData);
+    if (editingId) {
+      updateExperience(editingId, formData);
+      setEditingId(null);
+    } else {
+      addExperience(formData);
+    }
     setFormData({
       company: "",
       title: "",
@@ -38,17 +46,51 @@ export function ExperienceForm() {
       end_date: null,
       location: "",
       description: "",
+      body_html: "",
       is_current: false,
       skill_ids: [],
       project_ids: [],
     });
   };
 
+  const handleEdit = (exp: typeof experiences[0]) => {
+    setFormData({
+      company: exp.company,
+      title: exp.title,
+      start_date: exp.start_date || "",
+      end_date: exp.end_date || null,
+      location: exp.location || "",
+      description: exp.description || "",
+      body_html: exp.body_html || "",
+      is_current: exp.is_current,
+      skill_ids: exp.skill_ids || [],
+      project_ids: exp.project_ids || [],
+    });
+    setEditingId(exp.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleCancelEdit = () => {
+    setFormData({
+      company: "",
+      title: "",
+      start_date: "",
+      end_date: null,
+      location: "",
+      description: "",
+      body_html: "",
+      is_current: false,
+      skill_ids: [],
+      project_ids: [],
+    });
+    setEditingId(null);
+  };
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Add New Experience</CardTitle>
+          <CardTitle>{editingId ? "Edit Experience" : "Add New Experience"}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -129,16 +171,25 @@ export function ExperienceForm() {
             </div>
 
             <div>
-              <Label htmlFor="exp-description">Description</Label>
+              <Label htmlFor="exp_body_html">Body HTML</Label>
               <textarea
-                id="exp-description"
-                value={formData.description}
+                id="exp_body_html"
+                value={formData.body_html}
                 onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
+                  setFormData({ ...formData, body_html: e.target.value })
                 }
-                placeholder="Key responsibilities and achievements..."
-                className="w-full min-h-[100px] px-3 py-2 text-sm rounded-md border border-input bg-background"
+                placeholder="<p>Detailed role description with HTML...</p>"
+                className="w-full min-h-[120px] px-3 py-2 text-sm rounded-md border border-input bg-background font-mono"
               />
+              {formData.body_html && (
+                <div className="mt-2">
+                  <Label className="text-xs text-muted-foreground">Live Preview:</Label>
+                  <div
+                    className="mt-1 p-3 border rounded-md bg-muted/30 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: formData.body_html }}
+                  />
+                </div>
+              )}
             </div>
 
             <div>
@@ -205,9 +256,20 @@ export function ExperienceForm() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full">
-              Add Experience
-            </Button>
+            <div className="flex gap-2">
+              <Button type="submit" className="flex-1">
+                {editingId ? "Update Experience" : "Add Experience"}
+              </Button>
+              {editingId && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
           </form>
         </CardContent>
       </Card>
@@ -227,7 +289,7 @@ export function ExperienceForm() {
               {experiences.map((exp) => (
                 <div
                   key={exp.id}
-                  className="flex items-start justify-between p-4 border rounded-lg"
+                  className="group relative flex items-start justify-between p-4 border rounded-lg hover:border-primary/50 transition-colors"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
@@ -259,13 +321,24 @@ export function ExperienceForm() {
                       </p>
                     )}
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => deleteExperience(exp.id)}
-                  >
-                    Delete
-                  </Button>
+                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(exp)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteExperience(exp.id)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

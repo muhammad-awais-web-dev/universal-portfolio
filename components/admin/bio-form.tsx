@@ -25,6 +25,7 @@ export function BioForm() {
     instagram: "",
     youtube: "",
   });
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -43,6 +44,7 @@ export function BioForm() {
         instagram: profile.instagram || "",
         youtube: profile.youtube || "",
       });
+      setAvatarPreview(profile.avatar_url || null);
     }
   }, [profile]);
 
@@ -107,8 +109,22 @@ export function BioForm() {
                   onChange={(e) =>
                     setFormData({ ...formData, avatar_url: e.target.value })
                   }
+                  onBlur={(e) => {
+                    const url = e.target.value.trim();
+                    setAvatarPreview(url || null);
+                  }}
                   placeholder="https://example.com/avatar.jpg"
                 />
+                {avatarPreview && (
+                  <div className="mt-2 p-2 border rounded-md bg-muted/50">
+                    <img
+                      src={avatarPreview}
+                      alt="Avatar preview"
+                      className="w-24 h-24 rounded-full object-cover"
+                      onError={() => setAvatarPreview(null)}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
