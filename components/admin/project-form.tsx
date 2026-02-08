@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, X, Pencil } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { MultipleImageUpload } from "@/components/ui/multiple-image-upload";
 
 export function ProjectForm() {
   const { addProject, updateProject, projects, deleteProject, skills, projectCategories, addProjectCategory } = usePortfolio();
@@ -22,6 +23,7 @@ export function ProjectForm() {
     live_url: "",
     repo_url: "",
     featured_image: "",
+    image_gallery: [],
     is_published: false,
     skill_ids: [],
     category_ids: [],
@@ -52,6 +54,7 @@ export function ProjectForm() {
       live_url: "",
       repo_url: "",
       featured_image: "",
+      image_gallery: [],
       is_published: false,
       skill_ids: [],
       category_ids: [],
@@ -69,6 +72,7 @@ export function ProjectForm() {
       live_url: project.live_url || "",
       repo_url: project.repo_url || "",
       featured_image: project.featured_image,
+      image_gallery: project.image_gallery || [],
       is_published: project.is_published,
       skill_ids: project.skill_ids || [],
       category_ids: project.category_ids || [],
@@ -88,6 +92,7 @@ export function ProjectForm() {
       live_url: "",
       repo_url: "",
       featured_image: "",
+      image_gallery: [],
       is_published: false,
       skill_ids: [],
       category_ids: [],
@@ -177,6 +182,17 @@ export function ProjectForm() {
                 publicIdPrefix={formData.slug ? `project_${formData.slug}` : "project"}
                 aspectRatio="16:9"
                 maxSize={10}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="image_gallery">Image Gallery (Optional)</Label>
+              <MultipleImageUpload
+                images={formData.image_gallery || []}
+                onChange={(images) => setFormData({ ...formData, image_gallery: images })}
+                folder="portfolio/projects/gallery"
+                publicIdPrefix={formData.slug ? `project_${formData.slug}_gallery` : "project_gallery"}
+                maxImages={10}
               />
             </div>
 

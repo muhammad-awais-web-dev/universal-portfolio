@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pencil, X } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { MultipleImageUpload } from "@/components/ui/multiple-image-upload";
 
 export function CertificationForm() {
   const { addCertification, updateCertification, certifications, deleteCertification, skills, projects } =
@@ -21,6 +22,7 @@ export function CertificationForm() {
     issued_date: "",
     expiration_date: null,
     featured_image: "",
+    image_gallery: [],
     body_html: "",
     is_active: true,
     skill_ids: [],
@@ -47,6 +49,7 @@ export function CertificationForm() {
       issued_date: "",
       expiration_date: null,
       featured_image: "",
+      image_gallery: [],
       body_html: "",
       is_active: true,
       skill_ids: [],
@@ -63,6 +66,7 @@ export function CertificationForm() {
       issued_date: cert.issued_date || "",
       expiration_date: cert.expiration_date || null,
       featured_image: cert.featured_image,
+      image_gallery: cert.image_gallery || [],
       body_html: cert.body_html || "",
       is_active: cert.is_active,
       skill_ids: cert.skill_ids || [],
@@ -81,6 +85,7 @@ export function CertificationForm() {
       issued_date: "",
       expiration_date: null,
       featured_image: "",
+      image_gallery: [],
       body_html: "",
       is_active: true,
       skill_ids: [],
@@ -123,6 +128,17 @@ export function CertificationForm() {
                 publicIdPrefix={formData.title ? `cert_${formData.title.toLowerCase().replace(/\s+/g, '_')}` : "certification"}
                 aspectRatio="16:9"
                 maxSize={5}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="image_gallery">Image Gallery (Optional)</Label>
+              <MultipleImageUpload
+                images={formData.image_gallery || []}
+                onChange={(images) => setFormData({ ...formData, image_gallery: images })}
+                folder="portfolio/certifications/gallery"
+                publicIdPrefix={formData.title ? `cert_${formData.title.toLowerCase().replace(/\s+/g, '_')}_gallery` : "cert_gallery"}
+                maxImages={5}
               />
             </div>
 

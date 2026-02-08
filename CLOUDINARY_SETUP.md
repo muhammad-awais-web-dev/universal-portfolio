@@ -44,10 +44,39 @@ import { ImageUpload } from '@/components/ui/image-upload';
 
 ## 4. Features
 
+### Single Image Upload (ImageUpload Component)
+- ✅ Three upload methods: Direct upload, URL input, Library selection
 - ✅ File type validation (images only)
 - ✅ File size validation (configurable, default 10MB)
 - ✅ Upload progress indicator
 - ✅ Error handling with user-friendly messages
+- ✅ Auto-naming based on context (e.g., `project_myslug`, `cert_certification_name`)
+- ✅ Image preview with delete option
+- ✅ Cloudinary folder organization
+
+### Multiple Image Gallery (MultipleImageUpload Component)
+- ✅ Upload multiple images at once
+- ✅ Three upload methods for each image
+- ✅ Drag-and-drop reordering
+- ✅ Individual image deletion
+- ✅ Gallery preview grid
+- ✅ Configurable maximum images (default 10)
+- ✅ Position indicators
+
+### Image Library Management (ImageLibraryModal Component)
+- ✅ Browse all uploaded images by folder
+- ✅ Search functionality
+- ✅ Bulk delete with confirmation
+- ✅ Rename images
+- ✅ Display image names
+- ✅ Grid view with previews
+
+### API Routes
+- `/api/upload` - Generate upload signatures (signed uploads)
+- `/api/cloudinary/list` - List images from folders
+- `/api/cloudinary/rename` - Rename images
+- `/api/cloudinary/delete` - Bulk delete images
+- `/api/cloudinary/transform` - Generate transformation URLs
 - ✅ Image preview at the top
 - ✅ Three upload methods with button interface
 - ✅ Delete button on preview

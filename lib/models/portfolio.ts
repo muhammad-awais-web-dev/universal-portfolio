@@ -37,6 +37,7 @@ export interface Project {
   live_url?: string;
   repo_url?: string;
   featured_image: string; // Required featured image URL
+  image_gallery?: string[]; // Array of image URLs for gallery
   is_published?: boolean;
   published_at?: string | null;
   created_at?: string;
@@ -89,6 +90,7 @@ export interface Certification {
   issued_date?: string;
   expiration_date?: string | null;
   featured_image: string; // Required featured image URL
+  image_gallery?: string[]; // Array of image URLs for gallery
   is_active?: boolean; // Currently active/valid
   body_html?: string; // Rich HTML content for certification details
   created_at?: string;

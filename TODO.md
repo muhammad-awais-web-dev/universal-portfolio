@@ -26,8 +26,8 @@
 - [x] Show image preview in upload component
 - [x] Three upload methods (Upload, URL, Library)
 - [x] Image library modal with search
-- [ ] Implement multiple image gallery upload
-- [ ] Add image reordering functionality
+- [x] Implement multiple image gallery upload
+- [x] Add drag-and-drop image reordering
 - [ ] Add alt text support for images
 
 ### Priority 4 - Certification & Skill Images ✅ COMPLETED
@@ -37,7 +37,15 @@
 - [x] Auto-naming: `skill_name_timestamp`
 - [x] Three upload methods for all forms
 - [x] Cloudinary image library integration
-- [ ] Implement optional image gallery for certifications
+- [x] Implement multiple image gallery for certifications
+- [x] Add drag-and-drop image reordering
+
+### Priority 5 - Image Library Management ✅ COMPLETED
+- [x] Bulk delete functionality with confirmation
+- [x] Rename images in library
+- [x] Display image names in library grid
+- [x] Multi-select with checkboxes
+- [x] Create API routes for delete and rename operations
 
 ---
 
@@ -91,11 +99,12 @@
 - [ ] Replace local state with database queries
 
 ### Image Optimization
-- [ ] Set up Cloudinary transformations
+- [x] Set up Cloudinary transformations API
 - [ ] Generate responsive image sizes
 - [ ] Add lazy loading for images
-- [ ] Implement image compression
+- [ ] Implement image compression settings
 - [ ] Add webp format support
+- [ ] Add quality controls
 
 ### Testing & Quality
 - [ ] Write unit tests for components
