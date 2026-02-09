@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
+import { requireAuth } from '@/lib/auth/api-guard';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -9,6 +10,10 @@ cloudinary.config({
 });
 
 export async function POST(request: NextRequest) {
+  // Require authentication
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   try {
     const body = await request.json();
     const { oldPublicId, newPublicId } = body;

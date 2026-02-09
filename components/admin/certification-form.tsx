@@ -55,7 +55,6 @@ export function CertificationForm() {
       skill_ids: [],
       project_ids: [],
     });
-    setImagePreview(null);
   };
 
   const handleEdit = (cert: typeof certifications[0]) => {
@@ -72,7 +71,6 @@ export function CertificationForm() {
       skill_ids: cert.skill_ids || [],
       project_ids: cert.project_ids || [],
     });
-    setImagePreview(cert.featured_image);
     setEditingId(cert.id);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -91,7 +89,6 @@ export function CertificationForm() {
       skill_ids: [],
       project_ids: [],
     });
-    setImagePreview(null);
     setEditingId(null);
   };
 
