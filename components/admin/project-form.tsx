@@ -59,7 +59,6 @@ export function ProjectForm() {
       skill_ids: [],
       category_ids: [],
     });
-    setImagePreview(null);
   };
 
   const handleEdit = (project: typeof projects[0]) => {
@@ -77,7 +76,6 @@ export function ProjectForm() {
       skill_ids: project.skill_ids || [],
       category_ids: project.category_ids || [],
     });
-    setImagePreview(project.featured_image);
     setEditingId(project.id);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -97,7 +95,6 @@ export function ProjectForm() {
       skill_ids: [],
       category_ids: [],
     });
-    setImagePreview(null);
     setEditingId(null);
   };
 

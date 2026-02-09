@@ -1,4 +1,5 @@
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { LogoutButton } from "@/components/auth/logout-button";
 import Link from "next/link";
 
 export default function ProtectedLayout({
@@ -14,7 +15,10 @@ export default function ProtectedLayout({
             <div className="flex gap-5 items-center font-semibold">
               <Link href={"/"}>Portfolio Manager</Link>
             </div>
-            <ThemeSwitcher />
+            <div className="flex items-center gap-4">
+              <LogoutButton />
+              <ThemeSwitcher />
+            </div>
           </div>
         </nav>
         <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
@@ -22,7 +26,7 @@ export default function ProtectedLayout({
         </div>
 
         <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs gap-8 py-16">
-          <p>Built with Next.js & Supabase</p>
+          <p>Portfolio Management System</p>
         </footer>
       </div>
     </main>
