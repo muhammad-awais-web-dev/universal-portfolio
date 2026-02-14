@@ -1,4 +1,5 @@
 import { NavBarWrapper } from "@/components/admin/navbar-wrapper";
+import { GitHubPromoBanner } from "@/components/github-promo-banner";
 
 export default function ProtectedLayout({
   children,
@@ -17,6 +18,9 @@ export default function ProtectedLayout({
           <p>Portfolio Management System</p>
         </footer>
       </div>
+      
+      {/* GitHub Promo Banner - Fixed bottom-right */}
+      <GitHubPromoBanner />
     </main>
   );
 }
