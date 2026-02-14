@@ -683,12 +683,10 @@ export async function validateMcpApiKey(plainKey: string): Promise<boolean> {
       const isValid = await bcrypt.compare(plainKey, keyRecord.key_hash);
       if (isValid) {
         // Update last_used_at timestamp (fire and forget)
-        client
+        void client
           .from('mcp_api_keys')
           .update({ last_used_at: new Date().toISOString() })
-          .eq('id', keyRecord.id)
-          .then(() => {})
-          .catch(() => {}); // Ignore errors on timestamp update
+          .eq('id', keyRecord.id);
 
         return true;
       }

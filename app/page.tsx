@@ -1,7 +1,11 @@
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { EnvStatusDashboard } from "@/components/setup/env-status-dashboard";
+import { checkEnvStatus } from "@/lib/setup/env-checker";
 import Link from "next/link";
 
 export default function Home() {
+  const envStatus = checkEnvStatus();
+
   return (
     <main className="min-h-screen flex flex-col items-center">
       <div className="flex-1 w-full flex flex-col gap-20 items-center">
@@ -14,6 +18,9 @@ export default function Home() {
           </div>
         </nav>
         <div className="flex-1 flex flex-col gap-12 max-w-5xl p-5 w-full">
+          {/* Environment Status Dashboard */}
+          <EnvStatusDashboard status={envStatus} />
+          
           {/* Hero Section */}
           <section className="text-center space-y-6 py-12">
             <h1 className="text-5xl font-bold tracking-tight">
