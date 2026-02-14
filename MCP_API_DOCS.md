@@ -5,7 +5,16 @@ This MCP (Model Context Protocol) server provides read-only API access to your p
 
 ## Quick Start
 
-### 1. Generate API Key
+### 1. Generate API Key (Two Options)
+
+**Option A: Via Admin UI (Recommended)**
+1. Log in to your admin panel at `/protected/manage`
+2. Navigate to Settings (`/protected/settings`)
+3. Enter a name for your API key (e.g., "Production Key")
+4. Click "Create API Key"
+5. **Important:** Copy the key immediately - it won't be shown again!
+
+**Option B: Environment Variable (Legacy)**
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
@@ -13,33 +22,91 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ### 2. Configure Environment Variables
 Add to `.env.local`:
 ```bash
-MCP_API_KEY=<your-generated-key>
+# Enable MCP Server
 MCP_ENABLED=true
+
+# Legacy fallback key (optional - if no database keys exist)
+MCP_API_KEY=<your-generated-key>
+
+# Database connection (required)
 SUPABASE_URL=<your-supabase-url>
 SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+
+# Admin access (required for settings page)
+ADMIN_PASSPHRASE=<your-125-character-passphrase>
 ```
 
 ### 3. Deploy to Vercel
 ```bash
 # Add environment variables in Vercel dashboard
-vercel env add MCP_API_KEY
 vercel env add MCP_ENABLED
+vercel env add SUPABASE_URL
+vercel env add SUPABASE_SERVICE_ROLE_KEY
+vercel env add ADMIN_PASSPHRASE
+
+# Optional: Add legacy fallback key
+vercel env add MCP_API_KEY
 
 # Deploy
 vercel --prod
 ```
 
+## Authentication
+
+The MCP server supports two authentication methods:
+
+1. **Database-backed API Keys** (Recommended)
+   - Managed via Settings page
+   - Can enable/disable keys without redeployment
+   - Track last usage timestamps
+   - Multiple keys supported
+
+2. **Environment Variable** (Legacy Fallback)
+   - Uses `MCP_API_KEY` from environment
+   - Only used if no database keys are configured
+   - Maintained for backward compatibility
+
 ## API Endpoints
 
 ### Manifest
-Discover all available tools and their schemas.
+Discover all available tools, their schemas, and AI-friendly usage instructions.
 
 **Endpoint:** `GET /api/mcp/manifest`
+
+**Response includes:**
+- List of all available tools
+- System instructions for AI agents
+- Request/response format documentation
+- Best practices and error handling
 
 **Example:**
 ```bash
 curl https://your-site.vercel.app/api/mcp/manifest \
   -H "x-mcp-api-key: YOUR_API_KEY"
+```
+
+### Unified Router (Recommended)
+Call any tool via a single POST endpoint.
+
+**Endpoint:** `POST /api/mcp`
+
+**Request Body:**
+```json
+{
+  "tool": "list_projects",
+  "parameters": {
+    "category": "Web",
+    "limit": 5
+  }
+}
+```
+
+**Example:**
+```bash
+curl -X POST https://your-site.vercel.app/api/mcp \
+  -H "x-mcp-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"tool":"list_projects","parameters":{"limit":5}}'
 ```
 
 ### Profile
