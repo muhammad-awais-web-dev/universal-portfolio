@@ -1,4 +1,5 @@
 // MCP Router Endpoint
+// GET /api/mcp - Get available tools
 // POST /api/mcp - Routes tool calls to appropriate endpoints
 
 import { NextRequest } from 'next/server';
@@ -23,6 +24,149 @@ import {
 interface ToolCallRequest {
   tool: string;
   parameters?: Record<string, any>;
+}
+
+// Define available tools with their metadata
+const AVAILABLE_TOOLS = [
+  {
+    name: 'get_profile',
+    description: 'Get the portfolio owner\'s profile information including name, bio, contact details, and social links',
+    parameters: {},
+    required: []
+  },
+  {
+    name: 'list_projects',
+    description: 'List all published projects with optional filtering by category or skill. Supports pagination.',
+    parameters: {
+      category: 'string (optional) - Filter by category name',
+      skill: 'string (optional) - Filter by skill name',
+      page: 'number (optional) - Page number (default: 1)',
+      limit: 'number (optional) - Results per page (default: 10, max: 50)'
+    },
+    required: []
+  },
+  {
+    name: 'get_project',
+    description: 'Get detailed information about a specific project by ID or slug',
+    parameters: {
+      id: 'string or number (required) - Project ID or slug'
+    },
+    required: ['id']
+  },
+  {
+    name: 'list_skills',
+    description: 'List all skills with optional category filtering. Supports pagination.',
+    parameters: {
+      category: 'string (optional) - Filter by category name',
+      page: 'number (optional) - Page number (default: 1)',
+      limit: 'number (optional) - Results per page (default: 20, max: 100)'
+    },
+    required: []
+  },
+  {
+    name: 'get_skill',
+    description: 'Get detailed information about a specific skill by ID or name',
+    parameters: {
+      id: 'string or number (required) - Skill ID or name'
+    },
+    required: ['id']
+  },
+  {
+    name: 'list_certifications',
+    description: 'List all active certifications with details about issuing authority and dates',
+    parameters: {
+      page: 'number (optional) - Page number (default: 1)',
+      limit: 'number (optional) - Results per page (default: 10, max: 50)'
+    },
+    required: []
+  },
+  {
+    name: 'get_certification',
+    description: 'Get detailed information about a specific certification by ID',
+    parameters: {
+      id: 'number (required) - Certification ID'
+    },
+    required: ['id']
+  },
+  {
+    name: 'list_education',
+    description: 'List education history with institution, degree, and field of study information',
+    parameters: {
+      page: 'number (optional) - Page number (default: 1)',
+      limit: 'number (optional) - Results per page (default: 10, max: 50)'
+    },
+    required: []
+  },
+  {
+    name: 'get_education',
+    description: 'Get detailed information about a specific education entry by ID',
+    parameters: {
+      id: 'number (required) - Education ID'
+    },
+    required: ['id']
+  },
+  {
+    name: 'list_experience',
+    description: 'List work experience history with company, role, and duration information',
+    parameters: {
+      page: 'number (optional) - Page number (default: 1)',
+      limit: 'number (optional) - Results per page (default: 10, max: 50)'
+    },
+    required: []
+  },
+  {
+    name: 'get_experience',
+    description: 'Get detailed information about a specific work experience entry by ID',
+    parameters: {
+      id: 'number (required) - Experience ID'
+    },
+    required: ['id']
+  },
+  {
+    name: 'list_testimonials',
+    description: 'List active testimonials from clients and colleagues',
+    parameters: {
+      featured: 'boolean (optional) - Filter for featured testimonials only',
+      page: 'number (optional) - Page number (default: 1)',
+      limit: 'number (optional) - Results per page (default: 10, max: 50)'
+    },
+    required: []
+  },
+  {
+    name: 'get_testimonial',
+    description: 'Get detailed information about a specific testimonial by ID',
+    parameters: {
+      id: 'number (required) - Testimonial ID'
+    },
+    required: ['id']
+  }
+];
+
+async function handleGET(request: NextRequest) {
+  return Response.json(
+    mcpResponse({
+      name: 'Universal Portfolio MCP Router',
+      version: '1.0.0',
+      description: 'Dynamic router for accessing portfolio data. POST to this endpoint with {tool, parameters} to call any available tool.',
+      totalTools: AVAILABLE_TOOLS.length,
+      tools: AVAILABLE_TOOLS,
+      usage: {
+        method: 'POST',
+        contentType: 'application/json',
+        body: {
+          tool: 'string (required) - Tool name from the list above',
+          parameters: 'object (optional) - Tool-specific parameters'
+        },
+        example: {
+          tool: 'list_projects',
+          parameters: {
+            category: 'Web',
+            limit: 5
+          }
+        }
+      }
+    })
+  );
 }
 
 async function handlePOST(request: NextRequest) {
@@ -120,4 +264,5 @@ async function handlePOST(request: NextRequest) {
   }
 }
 
+export const GET = withAuth(handleGET);
 export const POST = withAuth(handlePOST);
