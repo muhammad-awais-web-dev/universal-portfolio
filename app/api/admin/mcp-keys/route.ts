@@ -14,7 +14,7 @@ import {
 // Validate admin session from cookies
 async function validateAdminSession(): Promise<boolean> {
   const cookieStore = await cookies();
-  const sessionToken = cookieStore.get('admin-session')?.value;
+  const sessionToken = cookieStore.get('portfolio_session')?.value;
 
   if (!sessionToken) {
     return false;
