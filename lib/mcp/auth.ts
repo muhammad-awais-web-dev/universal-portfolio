@@ -1,23 +1,18 @@
 // MCP Authentication Helpers
 import { NextRequest } from 'next/server';
 import { timingSafeEqual } from 'crypto';
+import { validateMcpApiKey } from '@/lib/data/portfolio-repository';
 
 /**
  * Validates API key from request headers
+ * Checks both database keys and environment variable (fallback)
  * Uses constant-time comparison to prevent timing attacks
  */
-export function validateApiKey(request: NextRequest): boolean {
+export async function validateApiKey(request: NextRequest): Promise<boolean> {
   const apiKey = request.headers.get('x-mcp-api-key');
-  const expectedKey = process.env.MCP_API_KEY;
 
   // Check if MCP is enabled
   if (process.env.MCP_ENABLED !== 'true') {
-    return false;
-  }
-
-  // Check if API key is configured
-  if (!expectedKey) {
-    console.error('MCP_API_KEY not configured in environment variables');
     return false;
   }
 
@@ -26,9 +21,26 @@ export function validateApiKey(request: NextRequest): boolean {
     return false;
   }
 
+  // Try database validation first
+  try {
+    const isValidInDb = await validateMcpApiKey(apiKey);
+    if (isValidInDb) {
+      return true;
+    }
+  } catch (error) {
+    console.error('Error validating API key against database:', error);
+    // Continue to environment variable fallback
+  }
+
+  // Fallback to environment variable (for backward compatibility)
+  const envKey = process.env.MCP_API_KEY;
+  if (!envKey) {
+    return false;
+  }
+
   // Use constant-time comparison to prevent timing attacks
   try {
-    const expectedBuffer = Buffer.from(expectedKey, 'utf-8');
+    const expectedBuffer = Buffer.from(envKey, 'utf-8');
     const providedBuffer = Buffer.from(apiKey, 'utf-8');
 
     // Only compare if lengths match (timingSafeEqual requires same length)
@@ -65,7 +77,8 @@ export function withAuth<T = any>(
   handler: (request: NextRequest, context: T) => Promise<Response>
 ) {
   return async (request: NextRequest, context: T) => {
-    if (!validateApiKey(request)) {
+    const isValid = await validateApiKey(request);
+    if (!isValid) {
       return unauthorizedResponse();
     }
     return handler(request, context);
