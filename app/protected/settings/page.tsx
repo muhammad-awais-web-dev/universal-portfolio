@@ -27,21 +27,9 @@ export default function SettingsPage() {
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Get passphrase from localStorage (set during login)
-  const getPassphrase = () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('adminPassphrase') || '';
-    }
-    return '';
-  };
-
   const fetchKeys = async () => {
     try {
-      const response = await fetch('/api/admin/mcp-keys', {
-        headers: {
-          'Authorization': `Bearer ${getPassphrase()}`,
-        },
-      });
+      const response = await fetch('/api/admin/mcp-keys');
 
       if (!response.ok) throw new Error('Failed to fetch keys');
       
@@ -72,7 +60,6 @@ export default function SettingsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getPassphrase()}`,
         },
         body: JSON.stringify({ name: newKeyName }),
       });
@@ -99,7 +86,6 @@ export default function SettingsPage() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getPassphrase()}`,
         },
         body: JSON.stringify({ id, enabled }),
       });
@@ -120,9 +106,6 @@ export default function SettingsPage() {
     try {
       const response = await fetch(`/api/admin/mcp-keys?id=${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${getPassphrase()}`,
-        },
       });
 
       if (!response.ok) throw new Error('Failed to delete key');

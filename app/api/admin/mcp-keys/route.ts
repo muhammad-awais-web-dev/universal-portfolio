@@ -1,7 +1,9 @@
 // Admin API: MCP API Keys Management
-// Requires ADMIN_PASSPHRASE authentication
+// Requires admin session authentication
 
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { verifySession } from '@/lib/auth/session';
 import {
   createMcpApiKey,
   listMcpApiKeys,
@@ -9,30 +11,29 @@ import {
   deleteMcpApiKey,
 } from '@/lib/data/portfolio-repository';
 
-// Simple passphrase authentication
-function validateAdminAuth(request: NextRequest): boolean {
-  const authHeader = request.headers.get('authorization');
-  const passphrase = process.env.ADMIN_PASSPHRASE;
+// Validate admin session from cookies
+async function validateAdminSession(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('admin-session')?.value;
 
-  if (!passphrase || !authHeader) {
+  if (!sessionToken) {
     return false;
   }
 
-  // Extract passphrase from "Bearer <passphrase>"
-  const providedPassphrase = authHeader.replace('Bearer ', '');
-  return providedPassphrase === passphrase;
+  return verifySession(sessionToken);
 }
 
 function unauthorizedResponse() {
   return NextResponse.json(
-    { error: 'Unauthorized: Invalid admin passphrase' },
+    { error: 'Unauthorized: Admin session required' },
     { status: 401 }
   );
 }
 
 // GET /api/admin/mcp-keys - List all API keys
 export async function GET(request: NextRequest) {
-  if (!validateAdminAuth(request)) {
+  const isValid = await validateAdminSession();
+  if (!isValid) {
     return unauthorizedResponse();
   }
 
@@ -49,7 +50,8 @@ export async function GET(request: NextRequest) {
 
 // POST /api/admin/mcp-keys - Create new API key
 export async function POST(request: NextRequest) {
-  if (!validateAdminAuth(request)) {
+  const isValid = await validateAdminSession();
+  if (!isValid) {
     return unauthorizedResponse();
   }
 
@@ -82,7 +84,8 @@ export async function POST(request: NextRequest) {
 
 // PATCH /api/admin/mcp-keys - Toggle key enabled status
 export async function PATCH(request: NextRequest) {
-  if (!validateAdminAuth(request)) {
+  const isValid = await validateAdminSession();
+  if (!isValid) {
     return unauthorizedResponse();
   }
 
@@ -112,7 +115,8 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE /api/admin/mcp-keys?id=<key-id> - Delete API key
 export async function DELETE(request: NextRequest) {
-  if (!validateAdminAuth(request)) {
+  const isValid = await validateAdminSession();
+  if (!isValid) {
     return unauthorizedResponse();
   }
 
