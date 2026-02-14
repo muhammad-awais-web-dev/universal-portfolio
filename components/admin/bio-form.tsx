@@ -47,9 +47,9 @@ export function BioForm() {
     }
   }, [profile]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile(formData);
+    await updateProfile(formData);
   };
 
   return (

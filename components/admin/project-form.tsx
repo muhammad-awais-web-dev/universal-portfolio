@@ -32,17 +32,17 @@ export function ProjectForm() {
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title || !formData.slug || !formData.featured_image) {
       alert("Title, Slug, and Featured Image are required");
       return;
     }
     if (editingId) {
-      updateProject(editingId, formData);
+      await updateProject(editingId, formData);
       setEditingId(null);
     } else {
-      addProject(formData);
+      await addProject(formData);
     }
     // Reset form
     setFormData({
@@ -113,9 +113,9 @@ export function ProjectForm() {
     }
   };
 
-  const handleAddNewCategory = () => {
+  const handleAddNewCategory = async () => {
     if (newCategoryName.trim()) {
-      addProjectCategory({ name: newCategoryName.trim() });
+      await addProjectCategory({ name: newCategoryName.trim() });
       setNewCategoryName("");
       setShowNewCategory(false);
     }
@@ -470,7 +470,7 @@ export function ProjectForm() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => deleteProject(project.id)}
+                      onClick={async () => await deleteProject(project.id)}
                       className="h-8 w-8 p-0"
                     >
                       <X className="h-4 w-4" />

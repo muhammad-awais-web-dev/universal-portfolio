@@ -30,17 +30,17 @@ export function CertificationForm() {
   });
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title || !formData.featured_image) {
       alert("Certification title and Featured Image are required");
       return;
     }
     if (editingId) {
-      updateCertification(editingId, formData);
+      await updateCertification(editingId, formData);
       setEditingId(null);
     } else {
-      addCertification(formData);
+      await addCertification(formData);
     }
     setFormData({
       title: "",
@@ -353,7 +353,7 @@ export function CertificationForm() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => deleteCertification(cert.id)}
+                      onClick={async () => await deleteCertification(cert.id)}
                       className="h-8 w-8 p-0"
                     >
                       <X className="h-4 w-4" />

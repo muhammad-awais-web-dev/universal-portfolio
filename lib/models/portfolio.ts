@@ -135,12 +135,30 @@ export interface Experience {
   project_ids?: number[]; // Projects completed in this role
 }
 
+export interface Testimonial {
+  id: number;
+  profile_id: string;
+  name: string;
+  position: string;
+  company?: string;
+  image_url?: string;
+  platform_name?: string;
+  platform_logo_url?: string;
+  comment: string;
+  testimonial_date?: string; // Stored as YYYY-MM format
+  is_featured?: boolean;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 // Form types (for creation/updates without IDs)
 export type ProjectFormData = Omit<Project, 'id' | 'owner_id' | 'created_at' | 'updated_at' | 'images'>;
 export type SkillFormData = Omit<Skill, 'id' | 'created_at'>;
 export type CertificationFormData = Omit<Certification, 'id' | 'profile_id' | 'created_at' | 'images'>;
 export type EducationFormData = Omit<Education, 'id' | 'profile_id' | 'created_at'>;
 export type ExperienceFormData = Omit<Experience, 'id' | 'profile_id' | 'created_at'>;
+export type TestimonialFormData = Omit<Testimonial, 'id' | 'profile_id' | 'created_at' | 'updated_at'>;
 export type ProfileFormData = Omit<Profile, 'id' | 'created_at' | 'updated_at'>;
 export type SkillCategoryFormData = Omit<SkillCategory, 'id' | 'created_at'>;
 export type ProjectCategoryFormData = Omit<ProjectCategory, 'id' | 'created_at'>;

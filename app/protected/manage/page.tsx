@@ -8,9 +8,10 @@ import { SkillForm } from "@/components/admin/skill-form";
 import { CertificationForm } from "@/components/admin/certification-form";
 import { ExperienceForm } from "@/components/admin/experience-form";
 import { EducationForm } from "@/components/admin/education-form";
+import { TestimonialForm } from "@/components/admin/testimonial-form";
 import { Button } from "@/components/ui/button";
 
-type Tab = "bio" | "projects" | "skills" | "certifications" | "experience" | "education";
+type Tab = "bio" | "projects" | "skills" | "certifications" | "experience" | "education" | "testimonials";
 
 export default function ManagePage() {
   const [activeTab, setActiveTab] = useState<Tab>("bio");
@@ -22,6 +23,7 @@ export default function ManagePage() {
     { id: "certifications", label: "Certifications" },
     { id: "experience", label: "Experience" },
     { id: "education", label: "Education" },
+    { id: "testimonials", label: "Testimonials" },
   ];
 
   return (
@@ -58,6 +60,7 @@ export default function ManagePage() {
           {activeTab === "certifications" && <CertificationForm />}
           {activeTab === "experience" && <ExperienceForm />}
           {activeTab === "education" && <EducationForm />}
+          {activeTab === "testimonials" && <TestimonialForm />}
         </div>
       </div>
     </PortfolioProvider>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import {
   Project,
   Skill,
@@ -9,6 +9,7 @@ import {
   Certification,
   Education,
   Experience,
+  Testimonial,
   Profile,
   ProjectFormData,
   SkillFormData,
@@ -17,73 +18,97 @@ import {
   CertificationFormData,
   EducationFormData,
   ExperienceFormData,
+  TestimonialFormData,
   ProfileFormData,
 } from "@/lib/models/portfolio";
 
+// Default profile id used by the DB seed row
+const DEFAULT_PROFILE_ID = "00000000-0000-0000-0000-000000000000";
+
 interface PortfolioContextType {
+  // Loading / error state
+  isLoading: boolean;
+  error: string | null;
+
   // Profile
   profile: Profile | null;
-  updateProfile: (profile: ProfileFormData) => void;
+  updateProfile: (profile: ProfileFormData) => Promise<void>;
 
   // Projects
   projects: Project[];
-  addProject: (project: ProjectFormData) => void;
-  updateProject: (id: number, project: Partial<ProjectFormData>) => void;
-  deleteProject: (id: number) => void;
+  addProject: (project: ProjectFormData) => Promise<void>;
+  updateProject: (id: number, project: Partial<ProjectFormData>) => Promise<void>;
+  deleteProject: (id: number) => Promise<void>;
 
   // Project Categories
   projectCategories: ProjectCategory[];
-  addProjectCategory: (category: ProjectCategoryFormData) => void;
-  updateProjectCategory: (id: number, category: Partial<ProjectCategoryFormData>) => void;
-  deleteProjectCategory: (id: number) => void;
+  addProjectCategory: (category: ProjectCategoryFormData) => Promise<void>;
+  updateProjectCategory: (id: number, category: Partial<ProjectCategoryFormData>) => Promise<void>;
+  deleteProjectCategory: (id: number) => Promise<void>;
 
   // Skills
   skills: Skill[];
-  addSkill: (skill: SkillFormData) => void;
-  updateSkill: (id: number, skill: Partial<SkillFormData>) => void;
-  deleteSkill: (id: number) => void;
+  addSkill: (skill: SkillFormData) => Promise<void>;
+  updateSkill: (id: number, skill: Partial<SkillFormData>) => Promise<void>;
+  deleteSkill: (id: number) => Promise<void>;
 
   // Skill Categories
   skillCategories: SkillCategory[];
-  addSkillCategory: (category: SkillCategoryFormData) => void;
-  updateSkillCategory: (id: number, category: Partial<SkillCategoryFormData>) => void;
-  deleteSkillCategory: (id: number) => void;
+  addSkillCategory: (category: SkillCategoryFormData) => Promise<void>;
+  updateSkillCategory: (id: number, category: Partial<SkillCategoryFormData>) => Promise<void>;
+  deleteSkillCategory: (id: number) => Promise<void>;
 
   // Certifications
   certifications: Certification[];
-  addCertification: (certification: CertificationFormData) => void;
-  updateCertification: (id: number, certification: Partial<CertificationFormData>) => void;
-  deleteCertification: (id: number) => void;
+  addCertification: (certification: CertificationFormData) => Promise<void>;
+  updateCertification: (id: number, certification: Partial<CertificationFormData>) => Promise<void>;
+  deleteCertification: (id: number) => Promise<void>;
 
   // Education
   education: Education[];
-  addEducation: (education: EducationFormData) => void;
-  updateEducation: (id: number, education: Partial<EducationFormData>) => void;
-  deleteEducation: (id: number) => void;
+  addEducation: (education: EducationFormData) => Promise<void>;
+  updateEducation: (id: number, education: Partial<EducationFormData>) => Promise<void>;
+  deleteEducation: (id: number) => Promise<void>;
 
   // Experience
   experiences: Experience[];
-  addExperience: (experience: ExperienceFormData) => void;
-  updateExperience: (id: number, experience: Partial<ExperienceFormData>) => void;
-  deleteExperience: (id: number) => void;
+  addExperience: (experience: ExperienceFormData) => Promise<void>;
+  updateExperience: (id: number, experience: Partial<ExperienceFormData>) => Promise<void>;
+  deleteExperience: (id: number) => Promise<void>;
+
+  // Testimonials
+  testimonials: Testimonial[];
+  addTestimonial: (testimonial: TestimonialFormData) => Promise<void>;
+  updateTestimonial: (id: number, testimonial: Partial<TestimonialFormData>) => Promise<void>;
+  deleteTestimonial: (id: number) => Promise<void>;
+
+  // Refresh all data from server
+  refresh: () => Promise<void>;
 }
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
 
-// LocalStorage keys
-const STORAGE_KEYS = {
-  PROFILE: "portfolio_profile",
-  PROJECTS: "portfolio_projects",
-  PROJECT_CATEGORIES: "portfolio_project_categories",
-  SKILLS: "portfolio_skills",
-  SKILL_CATEGORIES: "portfolio_skill_categories",
-  CERTIFICATIONS: "portfolio_certifications",
-  EDUCATION: "portfolio_education",
-  EXPERIENCES: "portfolio_experiences",
-};
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+async function api<T = unknown>(url: string, opts?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    headers: { "Content-Type": "application/json", ...(opts?.headers ?? {}) },
+    ...opts,
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json?.details ?? json?.error ?? res.statusText);
+  return json as T;
+}
+
+// ---------------------------------------------------------------------------
+// Provider
+// ---------------------------------------------------------------------------
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectCategories, setProjectCategories] = useState<ProjectCategory[]>([]);
@@ -92,314 +117,289 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [education, setEducation] = useState<Education[]>([]);
   const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
 
-  // Load data from localStorage on mount
-  useEffect(() => {
+  // Fetch all data from the combined endpoint
+  const refresh = useCallback(async () => {
     try {
-      const storedProfile = localStorage.getItem(STORAGE_KEYS.PROFILE);
-      const storedProjects = localStorage.getItem(STORAGE_KEYS.PROJECTS);
-      const storedProjectCategories = localStorage.getItem(STORAGE_KEYS.PROJECT_CATEGORIES);
-      const storedSkills = localStorage.getItem(STORAGE_KEYS.SKILLS);
-      const storedSkillCategories = localStorage.getItem(STORAGE_KEYS.SKILL_CATEGORIES);
-      const storedCertifications = localStorage.getItem(STORAGE_KEYS.CERTIFICATIONS);
-      const storedEducation = localStorage.getItem(STORAGE_KEYS.EDUCATION);
-      const storedExperiences = localStorage.getItem(STORAGE_KEYS.EXPERIENCES);
+      setIsLoading(true);
+      setError(null);
+      const data = await api<{
+        profile: Profile | null;
+        projects: Project[];
+        skills: Skill[];
+        skillCategories: SkillCategory[];
+        projectCategories: ProjectCategory[];
+        certifications: Certification[];
+        education: Education[];
+        experience: Experience[];
+        testimonials: Testimonial[];
+      }>("/api/portfolio");
 
-      if (storedProfile) setProfile(JSON.parse(storedProfile));
-      if (storedProjects) setProjects(JSON.parse(storedProjects));
-      if (storedProjectCategories) setProjectCategories(JSON.parse(storedProjectCategories));
-      if (storedSkills) setSkills(JSON.parse(storedSkills));
-      if (storedSkillCategories) setSkillCategories(JSON.parse(storedSkillCategories));
-      if (storedCertifications) setCertifications(JSON.parse(storedCertifications));
-      if (storedEducation) setEducation(JSON.parse(storedEducation));
-      if (storedExperiences) setExperiences(JSON.parse(storedExperiences));
-    } catch (error) {
-      console.error("Error loading data from localStorage:", error);
+      setProfile(data.profile);
+      setProjects(data.projects ?? []);
+      setSkills(data.skills ?? []);
+      setSkillCategories(data.skillCategories ?? []);
+      setProjectCategories(data.projectCategories ?? []);
+      setCertifications(data.certifications ?? []);
+      setEducation(data.education ?? []);
+      setExperiences(data.experience ?? []);
+      setTestimonials(data.testimonials ?? []);
+    } catch (err) {
+      console.error("Failed to load portfolio:", err);
+      setError((err as Error).message);
     } finally {
-      setIsInitialized(true);
+      setIsLoading(false);
     }
   }, []);
 
-  // Save profile to localStorage whenever it changes
   useEffect(() => {
-    if (isInitialized) {
-      try {
-        if (profile) {
-          localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profile));
-        } else {
-          localStorage.removeItem(STORAGE_KEYS.PROFILE);
-        }
-      } catch (error) {
-        console.error("Error saving profile to localStorage:", error);
-      }
-    }
-  }, [profile, isInitialized]);
+    refresh();
+  }, [refresh]);
 
-  // Save projects to localStorage whenever they change
-  useEffect(() => {
-    if (isInitialized) {
-      try {
-        localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(projects));
-      } catch (error) {
-        console.error("Error saving projects to localStorage:", error);
-      }
-    }
-  }, [projects, isInitialized]);
-
-  // Save project categories to localStorage whenever they change
-  useEffect(() => {
-    if (isInitialized) {
-      try {
-        localStorage.setItem(STORAGE_KEYS.PROJECT_CATEGORIES, JSON.stringify(projectCategories));
-      } catch (error) {
-        console.error("Error saving project categories to localStorage:", error);
-      }
-    }
-  }, [projectCategories, isInitialized]);
-
-  // Save skills to localStorage whenever they change
-  useEffect(() => {
-    if (isInitialized) {
-      try {
-        localStorage.setItem(STORAGE_KEYS.SKILLS, JSON.stringify(skills));
-      } catch (error) {
-        console.error("Error saving skills to localStorage:", error);
-      }
-    }
-  }, [skills, isInitialized]);
-
-  // Save skill categories to localStorage whenever they change
-  useEffect(() => {
-    if (isInitialized) {
-      try {
-        localStorage.setItem(STORAGE_KEYS.SKILL_CATEGORIES, JSON.stringify(skillCategories));
-      } catch (error) {
-        console.error("Error saving skill categories to localStorage:", error);
-      }
-    }
-  }, [skillCategories, isInitialized]);
-
-  // Save certifications to localStorage whenever they change
-  useEffect(() => {
-    if (isInitialized) {
-      try {
-        localStorage.setItem(STORAGE_KEYS.CERTIFICATIONS, JSON.stringify(certifications));
-      } catch (error) {
-        console.error("Error saving certifications to localStorage:", error);
-      }
-    }
-  }, [certifications, isInitialized]);
-
-  // Save education to localStorage whenever they change
-  useEffect(() => {
-    if (isInitialized) {
-      try {
-        localStorage.setItem(STORAGE_KEYS.EDUCATION, JSON.stringify(education));
-      } catch (error) {
-        console.error("Error saving education to localStorage:", error);
-      }
-    }
-  }, [education, isInitialized]);
-
-  // Save experiences to localStorage whenever they change
-  useEffect(() => {
-    if (isInitialized) {
-      try {
-        localStorage.setItem(STORAGE_KEYS.EXPERIENCES, JSON.stringify(experiences));
-      } catch (error) {
-        console.error("Error saving experiences to localStorage:", error);
-      }
-    }
-  }, [experiences, isInitialized]);
-
-  // Profile actions
-  const updateProfile = (profileData: ProfileFormData) => {
-    setProfile({
-      ...profileData,
-      id: "owner",
-      created_at: profile?.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+  // -------------------------------------------------------------------------
+  // Profile
+  // -------------------------------------------------------------------------
+  const updateProfileAction = async (profileData: ProfileFormData) => {
+    const { profile: saved } = await api<{ profile: Profile }>("/api/portfolio/profile", {
+      method: "PUT",
+      body: JSON.stringify(profileData),
     });
+    setProfile(saved);
   };
 
-  // Project actions
-  const addProject = (projectData: ProjectFormData) => {
-    const newProject: Project = {
-      ...projectData,
-      id: Date.now(),
-      owner_id: "owner",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    setProjects([...projects, newProject]);
+  // -------------------------------------------------------------------------
+  // Projects
+  // -------------------------------------------------------------------------
+  const addProject = async (projectData: ProjectFormData) => {
+    const { project: saved } = await api<{ project: Project }>("/api/portfolio/projects", {
+      method: "POST",
+      body: JSON.stringify({ ...projectData, owner_id: DEFAULT_PROFILE_ID }),
+    });
+    setProjects((prev) => [saved, ...prev]);
   };
 
-  const updateProject = (id: number, projectData: Partial<ProjectFormData>) => {
-    setProjects(
-      projects.map((p) =>
-        p.id === id
-          ? { ...p, ...projectData, updated_at: new Date().toISOString() }
-          : p
-      )
+  const updateProjectAction = async (id: number, projectData: Partial<ProjectFormData>) => {
+    const { project: saved } = await api<{ project: Project }>(`/api/portfolio/projects/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(projectData),
+    });
+    setProjects((prev) => prev.map((p) => (p.id === id ? saved : p)));
+  };
+
+  const deleteProjectAction = async (id: number) => {
+    await api(`/api/portfolio/projects/${id}`, { method: "DELETE" });
+    setProjects((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  // -------------------------------------------------------------------------
+  // Project Categories
+  // -------------------------------------------------------------------------
+  const addProjectCategory = async (categoryData: ProjectCategoryFormData) => {
+    const { category: saved } = await api<{ category: ProjectCategory }>("/api/portfolio/project-categories", {
+      method: "POST",
+      body: JSON.stringify(categoryData),
+    });
+    setProjectCategories((prev) => [...prev, saved]);
+  };
+
+  const updateProjectCategoryAction = async (id: number, categoryData: Partial<ProjectCategoryFormData>) => {
+    const { category: saved } = await api<{ category: ProjectCategory }>(`/api/portfolio/project-categories/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(categoryData),
+    });
+    setProjectCategories((prev) => prev.map((c) => (c.id === id ? saved : c)));
+  };
+
+  const deleteProjectCategoryAction = async (id: number) => {
+    await api(`/api/portfolio/project-categories/${id}`, { method: "DELETE" });
+    setProjectCategories((prev) => prev.filter((c) => c.id !== id));
+  };
+
+  // -------------------------------------------------------------------------
+  // Skills
+  // -------------------------------------------------------------------------
+  const addSkill = async (skillData: SkillFormData) => {
+    const { skill: saved } = await api<{ skill: Skill }>("/api/portfolio/skills", {
+      method: "POST",
+      body: JSON.stringify(skillData),
+    });
+    setSkills((prev) => [...prev, saved]);
+  };
+
+  const updateSkillAction = async (id: number, skillData: Partial<SkillFormData>) => {
+    const { skill: saved } = await api<{ skill: Skill }>(`/api/portfolio/skills/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(skillData),
+    });
+    setSkills((prev) => prev.map((s) => (s.id === id ? saved : s)));
+  };
+
+  const deleteSkillAction = async (id: number) => {
+    await api(`/api/portfolio/skills/${id}`, { method: "DELETE" });
+    setSkills((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  // -------------------------------------------------------------------------
+  // Skill Categories
+  // -------------------------------------------------------------------------
+  const addSkillCategory = async (categoryData: SkillCategoryFormData) => {
+    const { category: saved } = await api<{ category: SkillCategory }>("/api/portfolio/skill-categories", {
+      method: "POST",
+      body: JSON.stringify(categoryData),
+    });
+    setSkillCategories((prev) => [...prev, saved]);
+  };
+
+  const updateSkillCategoryAction = async (id: number, categoryData: Partial<SkillCategoryFormData>) => {
+    const { category: saved } = await api<{ category: SkillCategory }>(`/api/portfolio/skill-categories/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(categoryData),
+    });
+    setSkillCategories((prev) => prev.map((c) => (c.id === id ? saved : c)));
+  };
+
+  const deleteSkillCategoryAction = async (id: number) => {
+    await api(`/api/portfolio/skill-categories/${id}`, { method: "DELETE" });
+    setSkillCategories((prev) => prev.filter((c) => c.id !== id));
+  };
+
+  // -------------------------------------------------------------------------
+  // Certifications
+  // -------------------------------------------------------------------------
+  const addCertification = async (certData: CertificationFormData) => {
+    const { certification: saved } = await api<{ certification: Certification }>("/api/portfolio/certifications", {
+      method: "POST",
+      body: JSON.stringify({ ...certData, profile_id: DEFAULT_PROFILE_ID }),
+    });
+    setCertifications((prev) => [saved, ...prev]);
+  };
+
+  const updateCertificationAction = async (id: number, certData: Partial<CertificationFormData>) => {
+    const { certification: saved } = await api<{ certification: Certification }>(
+      `/api/portfolio/certifications/${id}`,
+      { method: "PUT", body: JSON.stringify(certData) }
     );
+    setCertifications((prev) => prev.map((c) => (c.id === id ? saved : c)));
   };
 
-  const deleteProject = (id: number) => {
-    setProjects(projects.filter((p) => p.id !== id));
+  const deleteCertificationAction = async (id: number) => {
+    await api(`/api/portfolio/certifications/${id}`, { method: "DELETE" });
+    setCertifications((prev) => prev.filter((c) => c.id !== id));
   };
 
-  // Project Category actions
-  const addProjectCategory = (categoryData: ProjectCategoryFormData) => {
-    const newCategory: ProjectCategory = {
-      ...categoryData,
-      id: Date.now(),
-      created_at: new Date().toISOString(),
-    };
-    setProjectCategories([...projectCategories, newCategory]);
+  // -------------------------------------------------------------------------
+  // Education
+  // -------------------------------------------------------------------------
+  const addEducation = async (eduData: EducationFormData) => {
+    const { education: saved } = await api<{ education: Education }>("/api/portfolio/education", {
+      method: "POST",
+      body: JSON.stringify({ ...eduData, profile_id: DEFAULT_PROFILE_ID }),
+    });
+    setEducation((prev) => [saved, ...prev]);
   };
 
-  const updateProjectCategory = (id: number, categoryData: Partial<ProjectCategoryFormData>) => {
-    setProjectCategories(
-      projectCategories.map((c) => (c.id === id ? { ...c, ...categoryData } : c))
-    );
+  const updateEducationAction = async (id: number, eduData: Partial<EducationFormData>) => {
+    const { education: saved } = await api<{ education: Education }>(`/api/portfolio/education/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(eduData),
+    });
+    setEducation((prev) => prev.map((e) => (e.id === id ? saved : e)));
   };
 
-  const deleteProjectCategory = (id: number) => {
-    setProjectCategories(projectCategories.filter((c) => c.id !== id));
+  const deleteEducationAction = async (id: number) => {
+    await api(`/api/portfolio/education/${id}`, { method: "DELETE" });
+    setEducation((prev) => prev.filter((e) => e.id !== id));
   };
 
-  // Skill actions
-  const addSkill = (skillData: SkillFormData) => {
-    const newSkill: Skill = {
-      ...skillData,
-      id: Date.now(),
-      created_at: new Date().toISOString(),
-    };
-    setSkills([...skills, newSkill]);
+  // -------------------------------------------------------------------------
+  // Experience
+  // -------------------------------------------------------------------------
+  const addExperience = async (expData: ExperienceFormData) => {
+    const { experience: saved } = await api<{ experience: Experience }>("/api/portfolio/experience", {
+      method: "POST",
+      body: JSON.stringify({ ...expData, profile_id: DEFAULT_PROFILE_ID }),
+    });
+    setExperiences((prev) => [saved, ...prev]);
   };
 
-  const updateSkill = (id: number, skillData: Partial<SkillFormData>) => {
-    setSkills(skills.map((s) => (s.id === id ? { ...s, ...skillData } : s)));
+  const updateExperienceAction = async (id: number, expData: Partial<ExperienceFormData>) => {
+    const { experience: saved } = await api<{ experience: Experience }>(`/api/portfolio/experience/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(expData),
+    });
+    setExperiences((prev) => prev.map((e) => (e.id === id ? saved : e)));
   };
 
-  const deleteSkill = (id: number) => {
-    setSkills(skills.filter((s) => s.id !== id));
+  const deleteExperienceAction = async (id: number) => {
+    await api(`/api/portfolio/experience/${id}`, { method: "DELETE" });
+    setExperiences((prev) => prev.filter((e) => e.id !== id));
   };
 
-  // Skill Category actions
-  const addSkillCategory = (categoryData: SkillCategoryFormData) => {
-    const newCategory: SkillCategory = {
-      ...categoryData,
-      id: Date.now(),
-      created_at: new Date().toISOString(),
-    };
-    setSkillCategories([...skillCategories, newCategory]);
+  // -------------------------------------------------------------------------
+  // Testimonials
+  // -------------------------------------------------------------------------
+  const addTestimonial = async (testimonialData: TestimonialFormData) => {
+    const { testimonial: saved } = await api<{ testimonial: Testimonial }>("/api/portfolio/testimonials", {
+      method: "POST",
+      body: JSON.stringify({ ...testimonialData, profile_id: DEFAULT_PROFILE_ID }),
+    });
+    setTestimonials((prev) => [saved, ...prev]);
   };
 
-  const updateSkillCategory = (id: number, categoryData: Partial<SkillCategoryFormData>) => {
-    setSkillCategories(
-      skillCategories.map((c) => (c.id === id ? { ...c, ...categoryData } : c))
-    );
+  const updateTestimonialAction = async (id: number, testimonialData: Partial<TestimonialFormData>) => {
+    const { testimonial: saved } = await api<{ testimonial: Testimonial }>(`/api/portfolio/testimonials/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(testimonialData),
+    });
+    setTestimonials((prev) => prev.map((t) => (t.id === id ? saved : t)));
   };
 
-  const deleteSkillCategory = (id: number) => {
-    setSkillCategories(skillCategories.filter((c) => c.id !== id));
-  };
-
-  // Certification actions
-  const addCertification = (certData: CertificationFormData) => {
-    const newCert: Certification = {
-      ...certData,
-      id: Date.now(),
-      profile_id: "owner",
-      created_at: new Date().toISOString(),
-    };
-    setCertifications([...certifications, newCert]);
-  };
-
-  const updateCertification = (id: number, certData: Partial<CertificationFormData>) => {
-    setCertifications(
-      certifications.map((c) => (c.id === id ? { ...c, ...certData } : c))
-    );
-  };
-
-  const deleteCertification = (id: number) => {
-    setCertifications(certifications.filter((c) => c.id !== id));
-  };
-
-  // Education actions
-  const addEducation = (eduData: EducationFormData) => {
-    const newEdu: Education = {
-      ...eduData,
-      id: Date.now(),
-      profile_id: "owner",
-      created_at: new Date().toISOString(),
-    };
-    setEducation([...education, newEdu]);
-  };
-
-  const updateEducation = (id: number, eduData: Partial<EducationFormData>) => {
-    setEducation(education.map((e) => (e.id === id ? { ...e, ...eduData } : e)));
-  };
-
-  const deleteEducation = (id: number) => {
-    setEducation(education.filter((e) => e.id !== id));
-  };
-
-  // Experience actions
-  const addExperience = (expData: ExperienceFormData) => {
-    const newExp: Experience = {
-      ...expData,
-      id: Date.now(),
-      profile_id: "owner",
-      created_at: new Date().toISOString(),
-    };
-    setExperiences([...experiences, newExp]);
-  };
-
-  const updateExperience = (id: number, expData: Partial<ExperienceFormData>) => {
-    setExperiences(
-      experiences.map((e) => (e.id === id ? { ...e, ...expData } : e))
-    );
-  };
-
-  const deleteExperience = (id: number) => {
-    setExperiences(experiences.filter((e) => e.id !== id));
+  const deleteTestimonialAction = async (id: number) => {
+    await api(`/api/portfolio/testimonials/${id}`, { method: "DELETE" });
+    setTestimonials((prev) => prev.filter((t) => t.id !== id));
   };
 
   return (
     <PortfolioContext.Provider
       value={{
+        isLoading,
+        error,
         profile,
-        updateProfile,
+        updateProfile: updateProfileAction,
         projects,
         addProject,
-        updateProject,
-        deleteProject,
+        updateProject: updateProjectAction,
+        deleteProject: deleteProjectAction,
         projectCategories,
         addProjectCategory,
-        updateProjectCategory,
-        deleteProjectCategory,
+        updateProjectCategory: updateProjectCategoryAction,
+        deleteProjectCategory: deleteProjectCategoryAction,
         skills,
         addSkill,
-        updateSkill,
-        deleteSkill,
+        updateSkill: updateSkillAction,
+        deleteSkill: deleteSkillAction,
         skillCategories,
         addSkillCategory,
-        updateSkillCategory,
-        deleteSkillCategory,
+        updateSkillCategory: updateSkillCategoryAction,
+        deleteSkillCategory: deleteSkillCategoryAction,
         certifications,
         addCertification,
-        updateCertification,
-        deleteCertification,
+        updateCertification: updateCertificationAction,
+        deleteCertification: deleteCertificationAction,
         education,
         addEducation,
-        updateEducation,
-        deleteEducation,
+        updateEducation: updateEducationAction,
+        deleteEducation: deleteEducationAction,
         experiences,
         addExperience,
-        updateExperience,
-        deleteExperience,
+        updateExperience: updateExperienceAction,
+        deleteExperience: deleteExperienceAction,
+        testimonials,
+        addTestimonial,
+        updateTestimonial: updateTestimonialAction,
+        deleteTestimonial: deleteTestimonialAction,
+        refresh,
       }}
     >
       {children}

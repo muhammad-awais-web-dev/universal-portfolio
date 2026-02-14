@@ -27,17 +27,17 @@ export function ExperienceForm() {
   });
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.company || !formData.title) {
       alert("Company and Job Title are required");
       return;
     }
     if (editingId) {
-      updateExperience(editingId, formData);
+      await updateExperience(editingId, formData);
       setEditingId(null);
     } else {
-      addExperience(formData);
+      await addExperience(formData);
     }
     setFormData({
       company: "",
@@ -333,7 +333,7 @@ export function ExperienceForm() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => deleteExperience(exp.id)}
+                      onClick={async () => await deleteExperience(exp.id)}
                       className="h-8 w-8 p-0"
                     >
                       <X className="h-4 w-4" />

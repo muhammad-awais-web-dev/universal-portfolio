@@ -24,20 +24,19 @@ export function SkillForm() {
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name) {
       alert("Skill name is required");
       return;
     }
     if (editingId) {
-      updateSkill(editingId, formData);
+      await updateSkill(editingId, formData);
       setEditingId(null);
     } else {
-      addSkill(formData);
+      await addSkill(formData);
     }
     setFormData({ name: "", category_ids: [], logo_url: "", body_html: "" });
-    setLogoPreview(null);
   };
 
   const handleEdit = (skill: typeof skills[0]) => {
@@ -47,14 +46,12 @@ export function SkillForm() {
       logo_url: skill.logo_url || "",
       body_html: skill.body_html || "",
     });
-    setLogoPreview(skill.logo_url || null);
     setEditingId(skill.id);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleCancelEdit = () => {
     setFormData({ name: "", category_ids: [], logo_url: "", body_html: "" });
-    setLogoPreview(null);
     setEditingId(null);
   };
 
@@ -73,9 +70,9 @@ export function SkillForm() {
     }
   };
 
-  const handleAddNewCategory = () => {
+  const handleAddNewCategory = async () => {
     if (newCategoryName.trim()) {
-      addSkillCategory({ name: newCategoryName.trim() });
+      await addSkillCategory({ name: newCategoryName.trim() });
       setNewCategoryName("");
       setShowNewCategory(false);
     }
@@ -283,7 +280,7 @@ export function SkillForm() {
                               <Pencil className="h-3 w-3" />
                             </button>
                             <button
-                              onClick={() => deleteSkill(skill.id)}
+                              onClick={async () => await deleteSkill(skill.id)}
                               className="h-6 w-6 rounded-sm flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors"
                               title="Delete skill"
                             >

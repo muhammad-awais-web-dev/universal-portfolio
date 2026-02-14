@@ -1,0 +1,568 @@
+import { SupabaseClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '../supabase-client';
+import type {
+  Profile,
+  Project,
+  ProjectImage,
+  Skill,
+  SkillCategory,
+  ProjectCategory,
+  Certification,
+  Education,
+  Experience,
+  Testimonial,
+} from '../models/portfolio';
+import {
+  ProfileInput,
+  ProjectCreateInput,
+  ProjectUpdateInput,
+  SkillCreateInput,
+  SkillUpdateInput,
+  CertificationCreateInput,
+  CertificationUpdateInput,
+  EducationCreateInput,
+  EducationUpdateInput,
+  ExperienceCreateInput,
+  ExperienceUpdateInput,
+  TestimonialCreateInput,
+  TestimonialUpdateInput,
+  profileSchema,
+  projectCreateSchema,
+  projectUpdateSchema,
+  skillCreateSchema,
+  skillUpdateSchema,
+  certificationCreateSchema,
+  certificationUpdateSchema,
+  educationCreateSchema,
+  educationUpdateSchema,
+  experienceCreateSchema,
+  experienceUpdateSchema,
+  testimonialCreateSchema,
+  testimonialUpdateSchema,
+  imageMetadataSchema,
+} from '../schemas/portfolio';
+import { z } from 'zod';
+
+// Default single-user profile id
+export const DEFAULT_PROFILE_ID = '00000000-0000-0000-0000-000000000000';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+class SupabaseNotConfiguredError extends Error {
+  constructor() {
+    super(
+      'Supabase admin client is not configured. Ensure SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set.'
+    );
+  }
+}
+
+function getClient(): SupabaseClient {
+  if (!supabaseAdmin) throw new SupabaseNotConfiguredError();
+  return supabaseAdmin;
+}
+
+/** Generic junction-table sync: delete existing rows, insert new ones. */
+async function syncJunction(
+  table: string,
+  fkColumn: string,
+  fkValue: number,
+  relColumn: string,
+  relValues: number[] | undefined
+) {
+  if (relValues === undefined) return;
+  const client = getClient();
+  await client.from(table).delete().eq(fkColumn, fkValue);
+  if (relValues.length > 0) {
+    await client
+      .from(table)
+      .insert(relValues.map((v) => ({ [fkColumn]: fkValue, [relColumn]: v })));
+  }
+}
+
+async function syncProjectRelations(
+  projectId: number,
+  {
+    skill_ids,
+    category_ids,
+    images,
+  }: { skill_ids?: number[]; category_ids?: number[]; images?: z.infer<typeof imageMetadataSchema>[] }
+) {
+  const client = getClient();
+  await syncJunction('project_skills', 'project_id', projectId, 'skill_id', skill_ids);
+  await syncJunction(
+    'project_categories_junction',
+    'project_id',
+    projectId,
+    'category_id',
+    category_ids
+  );
+
+  if (images) {
+    await client.from('project_images').delete().eq('project_id', projectId);
+    if (images.length > 0) {
+      await client.from('project_images').insert(
+        images.map((img) => ({
+          project_id: projectId,
+          cloudinary_public_id: img.cloudinary_public_id,
+          url: img.url,
+          alt_text: img.alt_text,
+          width: img.width,
+          height: img.height,
+          format: img.format,
+          position: img.position ?? 0,
+        }))
+      );
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// PROFILE
+// ---------------------------------------------------------------------------
+
+export async function getProfile(): Promise<Profile | null> {
+  const client = getClient();
+  const { data, error } = await client
+    .from('profiles')
+    .select('*')
+    .eq('id', DEFAULT_PROFILE_ID)
+    .single();
+  if (error && error.code !== 'PGRST116') throw new Error(`Failed to fetch profile: ${error.message}`);
+  return (data as Profile) ?? null;
+}
+
+export async function upsertProfile(input: ProfileInput): Promise<Profile> {
+  const client = getClient();
+  const payload = profileSchema.parse(input);
+  const { data, error } = await client
+    .from('profiles')
+    .upsert({ ...payload, id: DEFAULT_PROFILE_ID, updated_at: new Date().toISOString() })
+    .select('*')
+    .single();
+  if (error) throw new Error(`Failed to upsert profile: ${error.message}`);
+  return data as Profile;
+}
+
+// ---------------------------------------------------------------------------
+// PROJECTS
+// ---------------------------------------------------------------------------
+
+export async function listProjects(ownerId?: string): Promise<Project[]> {
+  const client = getClient();
+  let query = client.from('projects').select('*').order('created_at', { ascending: false });
+  if (ownerId) query = query.eq('owner_id', ownerId);
+  const { data, error } = await query;
+  if (error) throw new Error(`Failed to fetch projects: ${error.message}`);
+  return data as Project[];
+}
+
+export async function getProject(projectId: number): Promise<Project | null> {
+  const client = getClient();
+  const { data, error } = await client.from('projects').select('*').eq('id', projectId).single();
+  if (error && error.code !== 'PGRST116') throw new Error(`Failed to fetch project: ${error.message}`);
+  return (data as Project) ?? null;
+}
+
+export async function createProject(input: ProjectCreateInput): Promise<Project> {
+  const client = getClient();
+  const payload = projectCreateSchema.parse(input);
+  const { skill_ids, category_ids, images, ...values } = payload;
+  const { data, error } = await client.from('projects').insert(values).select('*').single();
+  if (error) throw new Error(`Failed to create project: ${error.message}`);
+  await syncProjectRelations(data.id, { skill_ids, category_ids, images });
+  return data as Project;
+}
+
+export async function updateProject(input: ProjectUpdateInput): Promise<Project> {
+  const client = getClient();
+  const payload = projectUpdateSchema.parse(input);
+  const { id, skill_ids, category_ids, images, ...values } = payload;
+  const { data, error } = await client
+    .from('projects')
+    .update({ ...values, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error) throw new Error(`Failed to update project: ${error.message}`);
+  await syncProjectRelations(id, { skill_ids, category_ids, images });
+  return data as Project;
+}
+
+export async function deleteProject(projectId: number): Promise<void> {
+  const client = getClient();
+  const { error } = await client.from('projects').delete().eq('id', projectId);
+  if (error) throw new Error(`Failed to delete project: ${error.message}`);
+}
+
+// ---------------------------------------------------------------------------
+// PROJECT CATEGORIES
+// ---------------------------------------------------------------------------
+
+export async function listProjectCategories(): Promise<ProjectCategory[]> {
+  const client = getClient();
+  const { data, error } = await client.from('project_categories').select('*').order('name');
+  if (error) throw new Error(`Failed to fetch project categories: ${error.message}`);
+  return data as ProjectCategory[];
+}
+
+export async function createProjectCategory(name: string): Promise<ProjectCategory> {
+  const client = getClient();
+  const { data, error } = await client
+    .from('project_categories')
+    .insert({ name: name.trim() })
+    .select('*')
+    .single();
+  if (error) throw new Error(`Failed to create project category: ${error.message}`);
+  return data as ProjectCategory;
+}
+
+export async function updateProjectCategory(id: number, name: string): Promise<ProjectCategory> {
+  const client = getClient();
+  const { data, error } = await client
+    .from('project_categories')
+    .update({ name: name.trim() })
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error) throw new Error(`Failed to update project category: ${error.message}`);
+  return data as ProjectCategory;
+}
+
+export async function deleteProjectCategory(id: number): Promise<void> {
+  const client = getClient();
+  const { error } = await client.from('project_categories').delete().eq('id', id);
+  if (error) throw new Error(`Failed to delete project category: ${error.message}`);
+}
+
+// ---------------------------------------------------------------------------
+// SKILLS
+// ---------------------------------------------------------------------------
+
+export async function listSkills(): Promise<Skill[]> {
+  const client = getClient();
+  const { data, error } = await client.from('skills').select('*').order('name');
+  if (error) throw new Error(`Failed to fetch skills: ${error.message}`);
+  return data as Skill[];
+}
+
+export async function getSkill(skillId: number): Promise<Skill | null> {
+  const client = getClient();
+  const { data, error } = await client.from('skills').select('*').eq('id', skillId).single();
+  if (error && error.code !== 'PGRST116') throw new Error(`Failed to fetch skill: ${error.message}`);
+  return (data as Skill) ?? null;
+}
+
+export async function createSkill(input: SkillCreateInput): Promise<Skill> {
+  const client = getClient();
+  const payload = skillCreateSchema.parse(input);
+  const { category_ids, ...values } = payload;
+  const { data, error } = await client.from('skills').insert(values).select('*').single();
+  if (error) throw new Error(`Failed to create skill: ${error.message}`);
+  await syncJunction('skill_categories_junction', 'skill_id', data.id, 'category_id', category_ids);
+  return data as Skill;
+}
+
+export async function updateSkill(input: SkillUpdateInput): Promise<Skill> {
+  const client = getClient();
+  const payload = skillUpdateSchema.parse(input);
+  const { id, category_ids, ...values } = payload;
+  const { data, error } = await client.from('skills').update(values).eq('id', id).select('*').single();
+  if (error) throw new Error(`Failed to update skill: ${error.message}`);
+  await syncJunction('skill_categories_junction', 'skill_id', id, 'category_id', category_ids);
+  return data as Skill;
+}
+
+export async function deleteSkill(skillId: number): Promise<void> {
+  const client = getClient();
+  const { error } = await client.from('skills').delete().eq('id', skillId);
+  if (error) throw new Error(`Failed to delete skill: ${error.message}`);
+}
+
+// ---------------------------------------------------------------------------
+// SKILL CATEGORIES
+// ---------------------------------------------------------------------------
+
+export async function listSkillCategories(): Promise<SkillCategory[]> {
+  const client = getClient();
+  const { data, error } = await client.from('skill_categories').select('*').order('name');
+  if (error) throw new Error(`Failed to fetch skill categories: ${error.message}`);
+  return data as SkillCategory[];
+}
+
+export async function createSkillCategory(name: string): Promise<SkillCategory> {
+  const client = getClient();
+  const { data, error } = await client
+    .from('skill_categories')
+    .insert({ name: name.trim() })
+    .select('*')
+    .single();
+  if (error) throw new Error(`Failed to create skill category: ${error.message}`);
+  return data as SkillCategory;
+}
+
+export async function updateSkillCategory(id: number, name: string): Promise<SkillCategory> {
+  const client = getClient();
+  const { data, error } = await client
+    .from('skill_categories')
+    .update({ name: name.trim() })
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error) throw new Error(`Failed to update skill category: ${error.message}`);
+  return data as SkillCategory;
+}
+
+export async function deleteSkillCategory(id: number): Promise<void> {
+  const client = getClient();
+  const { error } = await client.from('skill_categories').delete().eq('id', id);
+  if (error) throw new Error(`Failed to delete skill category: ${error.message}`);
+}
+
+// ---------------------------------------------------------------------------
+// CERTIFICATIONS
+// ---------------------------------------------------------------------------
+
+export async function listCertifications(): Promise<Certification[]> {
+  const client = getClient();
+  const { data, error } = await client
+    .from('certifications')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(`Failed to fetch certifications: ${error.message}`);
+  return data as Certification[];
+}
+
+export async function getCertification(id: number): Promise<Certification | null> {
+  const client = getClient();
+  const { data, error } = await client.from('certifications').select('*').eq('id', id).single();
+  if (error && error.code !== 'PGRST116') throw new Error(`Failed to fetch certification: ${error.message}`);
+  return (data as Certification) ?? null;
+}
+
+export async function createCertification(input: CertificationCreateInput): Promise<Certification> {
+  const client = getClient();
+  const payload = certificationCreateSchema.parse(input);
+  const { skill_ids, project_ids, images, ...values } = payload;
+  const { data, error } = await client.from('certifications').insert(values).select('*').single();
+  if (error) throw new Error(`Failed to create certification: ${error.message}`);
+  await syncJunction('certification_skills', 'certification_id', data.id, 'skill_id', skill_ids);
+  await syncJunction('certification_projects', 'certification_id', data.id, 'project_id', project_ids);
+  return data as Certification;
+}
+
+export async function updateCertification(input: CertificationUpdateInput): Promise<Certification> {
+  const client = getClient();
+  const payload = certificationUpdateSchema.parse(input);
+  const { id, skill_ids, project_ids, images, ...values } = payload;
+  const { data, error } = await client
+    .from('certifications')
+    .update(values)
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error) throw new Error(`Failed to update certification: ${error.message}`);
+  await syncJunction('certification_skills', 'certification_id', id, 'skill_id', skill_ids);
+  await syncJunction('certification_projects', 'certification_id', id, 'project_id', project_ids);
+  return data as Certification;
+}
+
+export async function deleteCertification(id: number): Promise<void> {
+  const client = getClient();
+  const { error } = await client.from('certifications').delete().eq('id', id);
+  if (error) throw new Error(`Failed to delete certification: ${error.message}`);
+}
+
+// ---------------------------------------------------------------------------
+// EDUCATION
+// ---------------------------------------------------------------------------
+
+export async function listEducation(): Promise<Education[]> {
+  const client = getClient();
+  const { data, error } = await client
+    .from('education')
+    .select('*')
+    .order('start_date', { ascending: false });
+  if (error) throw new Error(`Failed to fetch education: ${error.message}`);
+  return data as Education[];
+}
+
+export async function getEducation(id: number): Promise<Education | null> {
+  const client = getClient();
+  const { data, error } = await client.from('education').select('*').eq('id', id).single();
+  if (error && error.code !== 'PGRST116') throw new Error(`Failed to fetch education: ${error.message}`);
+  return (data as Education) ?? null;
+}
+
+export async function createEducation(input: EducationCreateInput): Promise<Education> {
+  const client = getClient();
+  const payload = educationCreateSchema.parse(input);
+  const { skill_ids, project_ids, ...values } = payload;
+  const { data, error } = await client.from('education').insert(values).select('*').single();
+  if (error) throw new Error(`Failed to create education: ${error.message}`);
+  await syncJunction('education_skills', 'education_id', data.id, 'skill_id', skill_ids);
+  await syncJunction('education_projects', 'education_id', data.id, 'project_id', project_ids);
+  return data as Education;
+}
+
+export async function updateEducation(input: EducationUpdateInput): Promise<Education> {
+  const client = getClient();
+  const payload = educationUpdateSchema.parse(input);
+  const { id, skill_ids, project_ids, ...values } = payload;
+  const { data, error } = await client.from('education').update(values).eq('id', id).select('*').single();
+  if (error) throw new Error(`Failed to update education: ${error.message}`);
+  await syncJunction('education_skills', 'education_id', id, 'skill_id', skill_ids);
+  await syncJunction('education_projects', 'education_id', id, 'project_id', project_ids);
+  return data as Education;
+}
+
+export async function deleteEducation(id: number): Promise<void> {
+  const client = getClient();
+  const { error } = await client.from('education').delete().eq('id', id);
+  if (error) throw new Error(`Failed to delete education: ${error.message}`);
+}
+
+// ---------------------------------------------------------------------------
+// EXPERIENCE
+// ---------------------------------------------------------------------------
+
+export async function listExperience(): Promise<Experience[]> {
+  const client = getClient();
+  const { data, error } = await client
+    .from('experience')
+    .select('*')
+    .order('start_date', { ascending: false });
+  if (error) throw new Error(`Failed to fetch experience: ${error.message}`);
+  return data as Experience[];
+}
+
+export async function getExperience(id: number): Promise<Experience | null> {
+  const client = getClient();
+  const { data, error } = await client.from('experience').select('*').eq('id', id).single();
+  if (error && error.code !== 'PGRST116') throw new Error(`Failed to fetch experience: ${error.message}`);
+  return (data as Experience) ?? null;
+}
+
+export async function createExperience(input: ExperienceCreateInput): Promise<Experience> {
+  const client = getClient();
+  const payload = experienceCreateSchema.parse(input);
+  const { skill_ids, project_ids, ...values } = payload;
+  const { data, error } = await client.from('experience').insert(values).select('*').single();
+  if (error) throw new Error(`Failed to create experience: ${error.message}`);
+  await syncJunction('experience_skills', 'experience_id', data.id, 'skill_id', skill_ids);
+  await syncJunction('experience_projects', 'experience_id', data.id, 'project_id', project_ids);
+  return data as Experience;
+}
+
+export async function updateExperience(input: ExperienceUpdateInput): Promise<Experience> {
+  const client = getClient();
+  const payload = experienceUpdateSchema.parse(input);
+  const { id, skill_ids, project_ids, ...values } = payload;
+  const { data, error } = await client
+    .from('experience')
+    .update(values)
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error) throw new Error(`Failed to update experience: ${error.message}`);
+  await syncJunction('experience_skills', 'experience_id', id, 'skill_id', skill_ids);
+  await syncJunction('experience_projects', 'experience_id', id, 'project_id', project_ids);
+  return data as Experience;
+}
+
+export async function deleteExperience(id: number): Promise<void> {
+  const client = getClient();
+  const { error } = await client.from('experience').delete().eq('id', id);
+  if (error) throw new Error(`Failed to delete experience: ${error.message}`);
+}
+
+// ---------------------------------------------------------------------------
+// TESTIMONIALS
+// ---------------------------------------------------------------------------
+
+export async function listTestimonials(): Promise<Testimonial[]> {
+  const client = getClient();
+  const { data, error } = await client
+    .from('testimonials')
+    .select('*')
+    .order('is_featured', { ascending: false })
+    .order('testimonial_date', { ascending: false });
+  if (error) throw new Error(`Failed to fetch testimonials: ${error.message}`);
+  return data as Testimonial[];
+}
+
+export async function getTestimonial(id: number): Promise<Testimonial | null> {
+  const client = getClient();
+  const { data, error } = await client.from('testimonials').select('*').eq('id', id).single();
+  if (error && error.code !== 'PGRST116') throw new Error(`Failed to fetch testimonial: ${error.message}`);
+  return (data as Testimonial) ?? null;
+}
+
+export async function createTestimonial(input: TestimonialCreateInput): Promise<Testimonial> {
+  const client = getClient();
+  const payload = testimonialCreateSchema.parse(input);
+  const { data, error } = await client.from('testimonials').insert(payload).select('*').single();
+  if (error) throw new Error(`Failed to create testimonial: ${error.message}`);
+  return data as Testimonial;
+}
+
+export async function updateTestimonial(input: TestimonialUpdateInput): Promise<Testimonial> {
+  const client = getClient();
+  const payload = testimonialUpdateSchema.parse(input);
+  const { id, ...values } = payload;
+  const { data, error } = await client
+    .from('testimonials')
+    .update(values)
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error) throw new Error(`Failed to update testimonial: ${error.message}`);
+  return data as Testimonial;
+}
+
+export async function deleteTestimonial(id: number): Promise<void> {
+  const client = getClient();
+  const { error } = await client.from('testimonials').delete().eq('id', id);
+  if (error) throw new Error(`Failed to delete testimonial: ${error.message}`);
+}
+
+// ---------------------------------------------------------------------------
+// FULL PORTFOLIO (combined read)
+// ---------------------------------------------------------------------------
+
+export async function getFullPortfolio() {
+  const [
+    profile,
+    projects,
+    skills,
+    skillCategories,
+    projectCategories,
+    certifications,
+    education,
+    experience,
+    testimonials,
+  ] = await Promise.all([
+    getProfile(),
+    listProjects(),
+    listSkills(),
+    listSkillCategories(),
+    listProjectCategories(),
+    listCertifications(),
+    listEducation(),
+    listExperience(),
+    listTestimonials(),
+  ]);
+
+  return {
+    profile,
+    projects,
+    skills,
+    skillCategories,
+    projectCategories,
+    certifications,
+    education,
+    experience,
+    testimonials,
+  };
+}

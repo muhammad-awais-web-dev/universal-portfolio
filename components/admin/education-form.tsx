@@ -27,17 +27,17 @@ export function EducationForm() {
   });
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.institution) {
       alert("Institution is required");
       return;
     }
     if (editingId) {
-      updateEducation(editingId, formData);
+      await updateEducation(editingId, formData);
       setEditingId(null);
     } else {
-      addEducation(formData);
+      await addEducation(formData);
     }
     setFormData({
       institution: "",
@@ -361,7 +361,7 @@ export function EducationForm() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => deleteEducation(edu.id)}
+                      onClick={async () => await deleteEducation(edu.id)}
                       className="h-8 w-8 p-0"
                     >
                       <X className="h-4 w-4" />
