@@ -38,8 +38,8 @@ export function EnvStatusDashboard({ status }: EnvStatusDashboardProps) {
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <CardTitle className="text-2xl flex items-center gap-2">
-                {status.isSetupComplete ? '✅' : '⚙️'} Environment Setup
+              <CardTitle className="text-2xl">
+                Environment Setup
               </CardTitle>
               <CardDescription className="mt-1">
                 {status.isSetupComplete
@@ -75,7 +75,7 @@ export function EnvStatusDashboard({ status }: EnvStatusDashboardProps) {
           </div>
         </CardHeader>
 
-        <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <CardContent className="space-y-4">
           {status.categories.map((category) => (
             <EnvStatusCard key={category.category} category={category} />
           ))}
@@ -84,7 +84,7 @@ export function EnvStatusDashboard({ status }: EnvStatusDashboardProps) {
         {!status.isSetupComplete && (
           <CardContent className="pt-0">
             <div className="bg-muted/50 rounded-lg p-4 text-sm">
-              <p className="font-semibold mb-2">📝 Next Steps:</p>
+              <p className="font-semibold mb-2">Next Steps:</p>
               <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
                 <li>Click "Show Details" on any red card to see setup instructions</li>
                 <li>Create a <code className="bg-background px-1 rounded">.env.local</code> file in the project root</li>

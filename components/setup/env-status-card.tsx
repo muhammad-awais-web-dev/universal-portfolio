@@ -29,11 +29,10 @@ export function EnvStatusCard({ category }: EnvStatusCardProps) {
   }[category.status];
 
   return (
-    <Card className={`${statusColors[category.status]} border-2`}>
+    <Card className={`${statusColors[category.status]} border-2 w-full`}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-3xl">{category.icon}</span>
             <div>
               <CardTitle className="text-lg">{category.name}</CardTitle>
               <CardDescription className="text-xs">{category.description}</CardDescription>
