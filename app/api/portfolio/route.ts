@@ -1,12 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getFullPortfolio } from '@/lib/data/portfolio-repository';
+import { withPortfolioGuard } from '@/lib/auth/portfolio-guard';
 
 /**
  * GET /api/portfolio
  * Returns the full portfolio payload in a single request.
- * Public endpoint — used by PortfolioContext on load and by future public site.
+ * 
+ * Access Rules:
+ * - Same-origin requests: Public (no authentication required)
+ * - External requests: Requires API key via x-mcp-api-key header
  */
-export async function GET() {
+async function handleGET(request: NextRequest) {
   try {
     const portfolio = await getFullPortfolio();
     return NextResponse.json(portfolio);
@@ -17,3 +21,5 @@ export async function GET() {
     );
   }
 }
+
+export const GET = withPortfolioGuard(handleGET);

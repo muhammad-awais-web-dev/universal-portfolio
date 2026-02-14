@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth/api-guard';
 import { getProfile, upsertProfile } from '@/lib/data/portfolio-repository';
 import { profileSchema } from '@/lib/schemas/portfolio';
+import { withPortfolioGuard } from '@/lib/auth/portfolio-guard';
 
-export async function GET() {
+async function handleGET(request: NextRequest) {
   try {
     const profile = await getProfile();
     return NextResponse.json({ profile });
@@ -14,6 +15,8 @@ export async function GET() {
     );
   }
 }
+
+export const GET = withPortfolioGuard(handleGET);
 
 export async function PUT(request: Request) {
   const authError = await requireAuth();
