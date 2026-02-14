@@ -17,7 +17,6 @@ export interface CategoryStatus {
   category: string;
   name: string;
   description: string;
-  icon: string;
   total: number;
   configured: number;
   required: number;
@@ -79,7 +78,6 @@ export function checkEnvStatus(): SetupStatus {
       category: cat,
       name: CATEGORY_INFO[cat as keyof typeof CATEGORY_INFO].name,
       description: CATEGORY_INFO[cat as keyof typeof CATEGORY_INFO].description,
-      icon: CATEGORY_INFO[cat as keyof typeof CATEGORY_INFO].icon,
       total,
       configured,
       required,

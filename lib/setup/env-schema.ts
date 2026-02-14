@@ -92,21 +92,17 @@ export const CATEGORY_INFO = {
   database: {
     name: 'Database',
     description: 'Supabase PostgreSQL database connection',
-    icon: '📊',
   },
   auth: {
     name: 'Authentication',
     description: 'Admin access control',
-    icon: '🔐',
   },
   media: {
     name: 'Media Storage',
     description: 'Cloudinary image hosting (optional)',
-    icon: '🖼️',
   },
   mcp: {
     name: 'MCP Server',
     description: 'Model Context Protocol API for AI agents',
-    icon: '🤖',
   },
 } as const;
