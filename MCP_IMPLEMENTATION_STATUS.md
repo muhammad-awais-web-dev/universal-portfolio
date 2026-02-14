@@ -1,11 +1,11 @@
 # MCP Server Implementation - Current Progress
 
-**Last Updated:** 2026-02-14 03:07 UTC  
-**Status:** ✅ Complete - All endpoints tested and working
+**Last Updated:** 2026-02-14 05:57 UTC  
+**Status:** ✅ Complete with API Keys Management
 
 ## What We're Building
 
-An MCP (Model Context Protocol) server that provides read-only API access to your Universal Portfolio database for AI agents. The server is built as Next.js API routes that can be deployed on Vercel's free hosting tier.
+An MCP (Model Context Protocol) server that provides read-only API access to your Universal Portfolio database for AI agents. The server is built as Next.js API routes with database-backed API key management.
 
 ## What's Completed ✅
 
@@ -29,55 +29,87 @@ An MCP (Model Context Protocol) server that provides read-only API access to you
 - ✅ Implemented experience endpoints (`/api/mcp/experience`, `/api/mcp/experience/[id]`)
 - ✅ Implemented testimonials endpoints (`/api/mcp/testimonials`, `/api/mcp/testimonials/[id]`)
 
-### Phase 4: Documentation (100% Complete)
-- ✅ Created MCP manifest endpoint (`/api/mcp/manifest`)
+### Phase 4: Documentation & Router (100% Complete)
+- ✅ Created MCP manifest endpoint with AI instructions (`/api/mcp/manifest`)
+- ✅ Created unified POST router (`/api/mcp`)
 - ✅ Created comprehensive API documentation (`MCP_API_DOCS.md`)
 - ✅ Updated `.env.example` with MCP configuration
 - ✅ Created test script (`test-mcp.mjs`)
 
-## ✅ IMPLEMENTATION COMPLETE
+### Phase 5: API Keys Management (NEW - 100% Complete)
+- ✅ Database schema for API keys (`supabase/migrations/003_mcp_api_keys.sql`)
+  - Bcrypt hashing for secure storage
+  - Enable/disable functionality
+  - Last used timestamp tracking
+- ✅ Repository methods in `lib/data/portfolio-repository.ts`
+  - `createMcpApiKey()` - Generate and hash new keys
+  - `listMcpApiKeys()` - List all keys (without exposing hashes)
+  - `toggleMcpApiKey()` - Enable/disable keys
+  - `deleteMcpApiKey()` - Remove keys
+  - `validateMcpApiKey()` - Authenticate with bcrypt comparison
+- ✅ Updated authentication (`lib/mcp/auth.ts`)
+  - Database-backed validation with bcrypt
+  - Environment variable fallback for backward compatibility
+  - Last used timestamp updates
+- ✅ Admin API endpoints (`/api/admin/mcp-keys`)
+  - GET - List keys
+  - POST - Create new key (returns plain key only once)
+  - PATCH - Toggle enabled status
+  - DELETE - Remove key
+  - Protected with ADMIN_PASSPHRASE
+- ✅ Settings UI (`/app/protected/settings/page.tsx`)
+  - Create new keys with name
+  - List all keys with status badges
+  - Toggle enable/disable switches
+  - Delete keys with confirmation
+  - Copy-to-clipboard for new keys
+- ✅ Enhanced manifest with AI instructions
+  - Usage documentation
+  - Request/response format examples
+  - Best practices
+  - Error handling guide
+- ✅ Test suite (`test-mcp-keys.mjs`)
+  - 8 comprehensive tests
+  - All tests passing ✅
 
-### Final Resolution
+## Testing Results
 
-**Issue Fixed:** TypeScript compilation errors resolved by updating the `withAuth()` wrapper to properly handle required context parameters.
-
-**Solution Applied:**
-1. Updated `lib/mcp/auth.ts` - Changed `withAuth()` to accept required context parameter instead of optional
-2. Updated `lib/data/portfolio-repository.ts` - Fixed `syncProjectRelations()` to accept correct image metadata type from schema instead of full `ProjectImage` type
-
-**Testing Results:**
+### Latest Test Run (2026-02-14)
 - ✅ TypeScript compilation: No errors
-- ✅ Production build: Success
-- ✅ All 13 MCP endpoints: Compiled correctly
-- ✅ Test suite: 10/10 tests passed
-- ✅ Authentication: Working correctly (rejects invalid keys)
-- ✅ API responses: Returning valid data
+- ✅ Production build: Success  
+- ✅ All 13 MCP endpoints: Working correctly
+- ✅ Manifest with instructions: ✅ Passed
+- ✅ API key creation: ✅ Passed
+- ✅ API key authentication: ✅ Passed
+- ✅ Enable/disable toggle: ✅ Passed
+- ✅ Key deletion: ✅ Passed
+- ✅ Environment variable fallback: ✅ Passed
 
-### Generated API Key
-```
-your-generated-api-key-here
-```
-*(Generate with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`)*
-*(Configured in `.env.local`)*
-
-## Files Created
+## Files Created/Updated
 
 ```
 lib/mcp/
-├── types.ts          # MCP type definitions
-├── auth.ts           # Authentication & withAuth wrapper (NEEDS FIX)
+├── types.ts          # MCP type definitions (updated with instructions)
+├── auth.ts           # Authentication with database support
 ├── schemas.ts        # MCP tool schemas (13 tools)
 └── service.ts        # Supabase service layer
 
+lib/models/
+└── portfolio.ts      # Added McpApiKey types
+
+lib/data/
+└── portfolio-repository.ts  # Added MCP key CRUD methods
+
 app/api/mcp/
-├── manifest/route.ts                    # Tool discovery
-├── profile/route.ts                     # Profile data
-├── projects/route.ts                    # List projects
-├── projects/[id]/route.ts              # Single project (HAS ERROR)
-├── skills/route.ts                      # List skills
-├── skills/[id]/route.ts                # Single skill (HAS ERROR)
-├── certifications/route.ts             # List certifications
-├── certifications/[id]/route.ts        # Single certification (HAS ERROR)
+├── route.ts                          # Unified POST router
+├── manifest/route.ts                 # Tool discovery with AI instructions
+├── profile/route.ts                  # Profile data
+├── projects/route.ts                 # List projects
+├── projects/[id]/route.ts           # Single project
+├── skills/route.ts                   # List skills
+├── skills/[id]/route.ts             # Single skill
+├── certifications/route.ts          # List certifications
+├── certifications/[id]/route.ts     # Single certification
 ├── education/route.ts                  # List education
 ├── education/[id]/route.ts             # Single education (HAS ERROR)
 ├── experience/route.ts                 # List experience

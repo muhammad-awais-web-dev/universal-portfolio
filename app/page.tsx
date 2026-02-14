@@ -1,19 +1,19 @@
 import { ThemeSwitcher } from "@/components/theme-switcher";
-import Link from "next/link";
+import { NavBarWrapper } from "@/components/admin/navbar-wrapper";
+import { EnvStatusDashboard } from "@/components/setup/env-status-dashboard";
+import { checkEnvStatus } from "@/lib/setup/env-checker";
 
 export default function Home() {
+  const envStatus = checkEnvStatus();
+
   return (
     <main className="min-h-screen flex flex-col items-center">
       <div className="flex-1 w-full flex flex-col gap-20 items-center">
-        <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
-          <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
-            <div className="flex gap-5 items-center font-semibold">
-              <Link href={"/"}>My Portfolio</Link>
-            </div>
-            <ThemeSwitcher />
-          </div>
-        </nav>
+        <NavBarWrapper />
         <div className="flex-1 flex flex-col gap-12 max-w-5xl p-5 w-full">
+          {/* Environment Status Dashboard */}
+          <EnvStatusDashboard status={envStatus} />
+          
           {/* Hero Section */}
           <section className="text-center space-y-6 py-12">
             <h1 className="text-5xl font-bold tracking-tight">

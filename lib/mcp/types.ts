@@ -23,6 +23,32 @@ export interface MCPManifest {
   version: string;
   description: string;
   tools: MCPTool[];
+  instructions?: {
+    usage: {
+      description: string;
+      endpoint: string;
+      method: string;
+      contentType: string;
+      authentication: {
+        type: string;
+        header: string;
+        description: string;
+      };
+    };
+    requestFormat: {
+      description: string;
+      schema: Record<string, string>;
+      example: any;
+    };
+    responseFormat: {
+      description: string;
+      schema: Record<string, string>;
+      successExample: any;
+      errorExample: any;
+    };
+    bestPractices: string[];
+    errorHandling: Record<string, string>;
+  };
 }
 
 // Filter and pagination types
