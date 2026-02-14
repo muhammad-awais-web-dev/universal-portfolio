@@ -566,3 +566,135 @@ export async function getFullPortfolio() {
     testimonials,
   };
 }
+
+// ---------------------------------------------------------------------------
+// MCP API Keys Management
+// ---------------------------------------------------------------------------
+
+/**
+ * Generate a new API key
+ * Returns both the plain key (show only once) and the stored record
+ */
+export async function createMcpApiKey(
+  name: string
+): Promise<{ key: string; id: string; record: any }> {
+  const client = getClient();
+  const crypto = await import('crypto');
+  const bcrypt = await import('bcryptjs');
+
+  // Generate random 32-byte key (64 hex characters)
+  const plainKey = crypto.randomBytes(32).toString('hex');
+  
+  // Hash the key for storage (bcrypt with 10 salt rounds)
+  const keyHash = await bcrypt.hash(plainKey, 10);
+
+  const { data, error } = await client
+    .from('mcp_api_keys')
+    .insert({
+      name,
+      key_hash: keyHash,
+      enabled: true,
+    })
+    .select('id, name, enabled, created_at, updated_at, last_used_at')
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to create API key: ${error.message}`);
+  }
+
+  return {
+    key: plainKey,
+    id: data.id,
+    record: data,
+  };
+}
+
+/**
+ * List all API keys (without exposing the hash)
+ */
+export async function listMcpApiKeys() {
+  const client = getClient();
+
+  const { data, error } = await client
+    .from('mcp_api_keys')
+    .select('id, name, enabled, created_at, updated_at, last_used_at')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to list API keys: ${error.message}`);
+  }
+
+  return data || [];
+}
+
+/**
+ * Toggle an API key's enabled status
+ */
+export async function toggleMcpApiKey(id: string, enabled: boolean): Promise<void> {
+  const client = getClient();
+
+  const { error } = await client
+    .from('mcp_api_keys')
+    .update({ enabled })
+    .eq('id', id);
+
+  if (error) {
+    throw new Error(`Failed to toggle API key: ${error.message}`);
+  }
+}
+
+/**
+ * Delete an API key
+ */
+export async function deleteMcpApiKey(id: string): Promise<void> {
+  const client = getClient();
+
+  const { error } = await client
+    .from('mcp_api_keys')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    throw new Error(`Failed to delete API key: ${error.message}`);
+  }
+}
+
+/**
+ * Validate an API key and update last_used_at
+ * Returns true if valid and enabled
+ */
+export async function validateMcpApiKey(plainKey: string): Promise<boolean> {
+  const client = getClient();
+  const bcrypt = await import('bcryptjs');
+
+  // Get all enabled keys
+  const { data: keys, error } = await client
+    .from('mcp_api_keys')
+    .select('id, key_hash')
+    .eq('enabled', true);
+
+  if (error || !keys || keys.length === 0) {
+    return false;
+  }
+
+  // Check each key hash
+  for (const keyRecord of keys) {
+    try {
+      const isValid = await bcrypt.compare(plainKey, keyRecord.key_hash);
+      if (isValid) {
+        // Update last_used_at timestamp (fire and forget)
+        void client
+          .from('mcp_api_keys')
+          .update({ last_used_at: new Date().toISOString() })
+          .eq('id', keyRecord.id);
+
+        return true;
+      }
+    } catch (err) {
+      // Continue checking other keys if comparison fails
+      continue;
+    }
+  }
+
+  return false;
+}

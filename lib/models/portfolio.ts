@@ -162,3 +162,17 @@ export type TestimonialFormData = Omit<Testimonial, 'id' | 'profile_id' | 'creat
 export type ProfileFormData = Omit<Profile, 'id' | 'created_at' | 'updated_at'>;
 export type SkillCategoryFormData = Omit<SkillCategory, 'id' | 'created_at'>;
 export type ProjectCategoryFormData = Omit<ProjectCategory, 'id' | 'created_at'>;
+
+// MCP API Keys
+export interface McpApiKey {
+  id: string;
+  name: string;
+  key_hash: string;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+  last_used_at?: string | null;
+}
+
+export type McpApiKeyFormData = Pick<McpApiKey, 'name'>;
+export type McpApiKeyListItem = Omit<McpApiKey, 'key_hash'>; // Never expose hash to client
