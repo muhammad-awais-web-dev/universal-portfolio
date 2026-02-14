@@ -2,9 +2,9 @@
 
 import { useAdminSession } from '@/lib/hooks/useAdminSession';
 import { useAdminProfile } from '@/lib/hooks/useAdminProfile';
-import { AdminHeaderBar } from './admin-header-bar';
+import { AdminNavBar } from './admin-header-bar';
 
-export function AdminHeaderProvider() {
+export function AdminNavProvider() {
   const { isLoggedIn, isChecking, logout } = useAdminSession();
   const { profile } = useAdminProfile(isLoggedIn);
 
@@ -13,10 +13,10 @@ export function AdminHeaderProvider() {
     return null;
   }
 
-  // Only show header when logged in
+  // Only show nav bar when logged in
   if (!isLoggedIn) {
     return null;
   }
 
-  return <AdminHeaderBar profile={profile} onLogout={logout} />;
+  return <AdminNavBar profile={profile} onLogout={logout} />;
 }
