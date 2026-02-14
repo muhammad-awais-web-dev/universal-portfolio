@@ -4,15 +4,16 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 import { LogOut, Settings, LayoutDashboard, Home } from 'lucide-react';
 import type { Profile } from '@/lib/models/portfolio';
 
-interface AdminHeaderBarProps {
+interface AdminNavBarProps {
   profile: Profile | null;
   onLogout: () => void;
 }
 
-export function AdminHeaderBar({ profile, onLogout }: AdminHeaderBarProps) {
+export function AdminNavBar({ profile, onLogout }: AdminNavBarProps) {
   const pathname = usePathname();
 
   const navItems = [
@@ -27,8 +28,8 @@ export function AdminHeaderBar({ profile, onLogout }: AdminHeaderBarProps) {
   };
 
   return (
-    <div className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center justify-between">
+    <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
             {profile?.image_url ? (
@@ -51,7 +52,7 @@ export function AdminHeaderBar({ profile, onLogout }: AdminHeaderBarProps) {
             </div>
           </div>
 
-          <nav className="flex items-center gap-1">
+          <div className="flex items-center gap-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -67,19 +68,22 @@ export function AdminHeaderBar({ profile, onLogout }: AdminHeaderBarProps) {
                 </Link>
               );
             })}
-          </nav>
+          </div>
         </div>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onLogout}
-          className="gap-2"
-        >
-          <LogOut className="h-4 w-4" />
-          <span className="hidden sm:inline">Logout</span>
-        </Button>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onLogout}
+            className="gap-2"
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">Logout</span>
+          </Button>
+          <ThemeSwitcher />
+        </div>
       </div>
-    </div>
+    </nav>
   );
 }
