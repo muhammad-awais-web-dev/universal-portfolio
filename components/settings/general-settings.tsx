@@ -109,6 +109,44 @@ export function GeneralSettings() {
         </CardContent>
       </Card>
 
+      {/* MCP Server */}
+      <Card>
+        <CardHeader>
+          <CardTitle>MCP Server</CardTitle>
+          <CardDescription>
+            Enable or disable the Model Context Protocol API server for AI agents
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Enable MCP Server</Label>
+              <p className="text-sm text-muted-foreground">
+                When enabled, AI agents can access your portfolio data via MCP API
+              </p>
+            </div>
+            <Switch
+              checked={settings.mcpEnabled}
+              onCheckedChange={(checked) => 
+                setSettings(prev => prev ? { 
+                  ...prev, 
+                  mcpEnabled: checked 
+                } : null)
+              }
+            />
+          </div>
+          
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {settings.mcpEnabled 
+                ? 'MCP server is enabled. API keys can be managed in the API Keys tab.'
+                : 'MCP server is disabled. Enable it to allow AI agent access.'}
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+
       {/* Website Name */}
       <Card>
         <CardHeader>

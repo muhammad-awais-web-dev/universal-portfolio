@@ -1,5 +1,6 @@
 export interface PortfolioSettings {
   mode: 'development' | 'published';
+  mcpEnabled: boolean;
   websiteName: string;
   logo: string | null;
   favicon: string | null;
@@ -8,6 +9,7 @@ export interface PortfolioSettings {
 
 export const DEFAULT_SETTINGS: PortfolioSettings = {
   mode: 'development',
+  mcpEnabled: false,
   websiteName: 'My Portfolio',
   logo: null,
   favicon: null,
