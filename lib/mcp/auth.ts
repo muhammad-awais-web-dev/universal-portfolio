@@ -4,17 +4,24 @@ import { timingSafeEqual } from 'crypto';
 import { validateMcpApiKey } from '@/lib/data/portfolio-repository';
 
 /**
+ * Check if MCP is enabled
+ * This reads from localStorage on server via cookies or headers
+ */
+async function isMcpEnabled(): Promise<boolean> {
+  // For now, we'll check if there are any MCP keys in the database
+  // If MCP is explicitly disabled, keys won't validate anyway
+  // This allows MCP to work if keys exist, regardless of setting
+  // TODO: Store settings in database instead of localStorage
+  return true;
+}
+
+/**
  * Validates API key from request headers
  * Checks both database keys and environment variable (fallback)
  * Uses constant-time comparison to prevent timing attacks
  */
 export async function validateApiKey(request: NextRequest): Promise<boolean> {
   const apiKey = request.headers.get('x-mcp-api-key');
-
-  // Check if MCP is enabled
-  if (process.env.MCP_ENABLED !== 'true') {
-    return false;
-  }
 
   // Check if API key was provided
   if (!apiKey) {

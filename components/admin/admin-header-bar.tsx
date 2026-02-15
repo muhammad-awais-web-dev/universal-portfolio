@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeSwitcher } from '@/components/theme-switcher';
-import { LogOut, Settings, LayoutDashboard, Home } from 'lucide-react';
+import { LogOut, Settings, LayoutDashboard, Home, Images } from 'lucide-react';
 import type { Profile } from '@/lib/models/portfolio';
 
 interface AdminNavBarProps {
@@ -19,6 +19,7 @@ export function AdminNavBar({ profile, onLogout }: AdminNavBarProps) {
   const navItems = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/protected/manage', label: 'Manage', icon: LayoutDashboard },
+    { href: '/protected/media-library', label: 'Media', icon: Images },
     { href: '/protected/settings', label: 'Settings', icon: Settings },
   ];
 
@@ -32,9 +33,9 @@ export function AdminNavBar({ profile, onLogout }: AdminNavBarProps) {
       <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
-            {profile?.image_url ? (
+            {profile?.avatar_url ? (
               <Avatar className="h-8 w-8">
-                <AvatarImage src={profile.image_url} alt={profile.full_name || 'Admin'} />
+                <AvatarImage src={profile.avatar_url} alt={profile.full_name || 'Admin'} />
                 <AvatarFallback>
                   {profile.full_name?.charAt(0) || 'A'}
                 </AvatarFallback>
@@ -46,7 +47,7 @@ export function AdminNavBar({ profile, onLogout }: AdminNavBarProps) {
             )}
             <div className="hidden md:block">
               <p className="text-sm font-semibold leading-none">
-                {profile?.full_name || 'Admin'}
+                Welcome, {profile?.full_name || 'Admin'}
               </p>
               <p className="text-xs text-muted-foreground">Admin Mode</p>
             </div>
