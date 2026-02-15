@@ -40,13 +40,6 @@ export const ENV_VARIABLES: EnvVariable[] = [
   
   // MCP Server
   {
-    key: 'MCP_ENABLED',
-    required: true,
-    category: 'mcp',
-    description: 'Enable MCP server (true/false)',
-    instructions: 'Set to "true" to enable the MCP API server for AI agents',
-  },
-  {
     key: 'MCP_API_KEY',
     required: false,
     category: 'mcp',

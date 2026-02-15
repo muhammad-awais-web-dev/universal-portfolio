@@ -3,12 +3,10 @@
 import { useEffect, useState } from "react";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { NavBarWrapper } from "@/components/admin/navbar-wrapper";
-import { EnvStatusDashboard } from "@/components/setup/env-status-dashboard";
+import { EnvProcessValidator } from "@/components/setup/env-process-validator";
 import { ComingSoonPage } from "@/components/coming-soon-page";
-import { checkEnvStatus } from "@/lib/setup/env-checker";
 import { getSettings, type PortfolioSettings } from "@/lib/settings";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { useAdminSession } from "@/lib/hooks/useAdminSession";
 
 interface HomePageProps {
   isAdmin: boolean;
@@ -19,7 +17,7 @@ interface HomePageProps {
 export default function HomePage({ isAdmin, forceDevMode, missingVars }: HomePageProps) {
   const [settings, setSettings] = useState<PortfolioSettings | null>(null);
   const [mounted, setMounted] = useState(false);
-  const envStatus = checkEnvStatus();
+  const { isLoggedIn, isChecking } = useAdminSession();
 
   useEffect(() => {
     // Set flag for critical env vars check
@@ -35,13 +33,47 @@ export default function HomePage({ isAdmin, forceDevMode, missingVars }: HomePag
     return null; // Avoid hydration mismatch
   }
 
+  // Use client-side session check (isLoggedIn) instead of server-side isAdmin
+  const effectiveIsAdmin = isLoggedIn;
+
   // Determine actual mode (forced to dev if critical vars missing)
   const actualMode = forceDevMode ? 'development' : (settings?.mode || 'development');
 
   // Show development mode
   if (actualMode === 'development') {
+    // If critical env vars are missing (forceDevMode), show env dashboard regardless of admin status
+    // This allows users to see what needs to be configured
+    if (forceDevMode) {
+      return (
+        <main className="min-h-screen flex flex-col items-center">
+          <div className="flex-1 w-full flex flex-col gap-20 items-center">
+            <NavBarWrapper />
+            <div className="flex-1 flex flex-col gap-12 max-w-5xl p-5 w-full">
+              <EnvProcessValidator 
+                missingVars={missingVars}
+                forceDevMode={forceDevMode}
+              />
+              
+              <section className="text-center space-y-4 py-8 border rounded-lg p-6 bg-muted/50">
+                <h2 className="text-2xl font-bold">Development Mode</h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                  Your portfolio is in development mode. The environment validator above shows the status 
+                  of your configuration. Configure the missing environment variables to proceed.
+                </p>
+              </section>
+            </div>
+
+            <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs gap-8 py-16">
+              <p>Personal Portfolio Website - Development Mode</p>
+              <ThemeSwitcher />
+            </footer>
+          </div>
+        </main>
+      );
+    }
+    
     // Non-admin users see "Coming Soon"
-    if (!isAdmin) {
+    if (!effectiveIsAdmin) {
       return <ComingSoonPage />;
     }
 
@@ -51,22 +83,15 @@ export default function HomePage({ isAdmin, forceDevMode, missingVars }: HomePag
         <div className="flex-1 w-full flex flex-col gap-20 items-center">
           <NavBarWrapper />
           <div className="flex-1 flex flex-col gap-12 max-w-5xl p-5 w-full">
-            {forceDevMode && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Development mode is auto-enforced.</strong> Critical environment variables are missing: {missingVars.join(', ')}. 
-                  Configure these variables to enable published mode.
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            <EnvStatusDashboard status={envStatus} />
+            <EnvProcessValidator 
+              missingVars={missingVars}
+              forceDevMode={forceDevMode}
+            />
             
             <section className="text-center space-y-4 py-8 border rounded-lg p-6 bg-muted/50">
               <h2 className="text-2xl font-bold">Development Mode</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Your portfolio is in development mode. The environment checker above shows the status 
+                Your portfolio is in development mode. The environment validator above shows the status 
                 of your configuration. Switch to "Published" mode in Settings when ready to go live.
               </p>
             </section>
