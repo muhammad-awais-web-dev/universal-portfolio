@@ -20,6 +20,7 @@ interface ValidationService {
   status: 'pending' | 'checking' | 'success' | 'error';
   isOpen: boolean;
   subSteps: SubStep[];
+  message?: string;
   errorMessage?: string;
   fixInstructions?: string;
 }
