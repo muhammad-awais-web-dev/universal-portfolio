@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { usePortfolio } from "./portfolio-context";
 import { CertificationFormData } from "@/lib/models/portfolio";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,15 @@ export function CertificationForm() {
     project_ids: [],
   });
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  // Sort certifications by issued_date (newest first)
+  const sortedCertifications = useMemo(() => {
+    return [...certifications].sort((a, b) => {
+      const dateA = a.issued_date ? new Date(a.issued_date).getTime() : 0;
+      const dateB = b.issued_date ? new Date(b.issued_date).getTime() : 0;
+      return dateB - dateA; // Newest first
+    });
+  }, [certifications]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -304,7 +313,7 @@ export function CertificationForm() {
             </p>
           ) : (
             <div className="space-y-3">
-              {certifications.map((cert) => (
+              {sortedCertifications.map((cert) => (
                 <div
                   key={cert.id}
                   className="group relative flex items-start justify-between p-4 border rounded-lg hover:border-primary/50 transition-colors"
