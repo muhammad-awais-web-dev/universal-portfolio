@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { usePortfolio } from "./portfolio-context";
 import { EducationFormData } from "@/lib/models/portfolio";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,15 @@ export function EducationForm() {
     project_ids: [],
   });
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  // Sort education by start_date (newest first)
+  const sortedEducation = useMemo(() => {
+    return [...education].sort((a, b) => {
+      const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
+      const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
+      return dateB - dateA; // Newest first
+    });
+  }, [education]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -301,7 +310,7 @@ export function EducationForm() {
             </p>
           ) : (
             <div className="space-y-3">
-              {education.map((edu) => (
+              {sortedEducation.map((edu) => (
                 <div
                   key={edu.id}
                   className="group relative flex items-start justify-between p-4 border rounded-lg hover:border-primary/50 transition-colors"

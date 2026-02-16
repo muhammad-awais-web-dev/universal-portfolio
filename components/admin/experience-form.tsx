@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { usePortfolio } from "./portfolio-context";
 import { ExperienceFormData } from "@/lib/models/portfolio";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,15 @@ export function ExperienceForm() {
     project_ids: [],
   });
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  // Sort experiences by start_date (newest first)
+  const sortedExperiences = useMemo(() => {
+    return [...experiences].sort((a, b) => {
+      const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
+      const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
+      return dateB - dateA; // Newest first
+    });
+  }, [experiences]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -286,7 +295,7 @@ export function ExperienceForm() {
             </p>
           ) : (
             <div className="space-y-3">
-              {experiences.map((exp) => (
+              {sortedExperiences.map((exp) => (
                 <div
                   key={exp.id}
                   className="group relative flex items-start justify-between p-4 border rounded-lg hover:border-primary/50 transition-colors"

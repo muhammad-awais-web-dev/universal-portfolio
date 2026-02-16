@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { usePortfolio } from "./portfolio-context";
 import { SkillFormData } from "@/lib/models/portfolio";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,22 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, X, Pencil } from "lucide-react";
+import { Plus, X, Pencil, Search } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
 
 export function SkillForm() {
-  const { addSkill, updateSkill, skills, deleteSkill, skillCategories, addSkillCategory } = usePortfolio();
+  const { 
+    addSkill, 
+    updateSkill, 
+    skills, 
+    deleteSkill, 
+    skillCategories, 
+    addSkillCategory,
+    projects,
+    certifications,
+    education,
+    experiences
+  } = usePortfolio();
   const [formData, setFormData] = useState<SkillFormData>({
     name: "",
     category_ids: [],
@@ -23,6 +34,63 @@ export function SkillForm() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Calculate skill usage counts
+  const skillUsageCounts = useMemo(() => {
+    const counts: Record<number, number> = {};
+    
+    skills.forEach(skill => {
+      counts[skill.id] = 0;
+      
+      // Count in projects
+      projects.forEach(project => {
+        if (project.skill_ids?.includes(skill.id)) {
+          counts[skill.id]++;
+        }
+      });
+      
+      // Count in certifications
+      certifications.forEach(cert => {
+        if (cert.skill_ids?.includes(skill.id)) {
+          counts[skill.id]++;
+        }
+      });
+      
+      // Count in education
+      education.forEach(edu => {
+        if (edu.skill_ids?.includes(skill.id)) {
+          counts[skill.id]++;
+        }
+      });
+      
+      // Count in experiences
+      experiences.forEach(exp => {
+        if (exp.skill_ids?.includes(skill.id)) {
+          counts[skill.id]++;
+        }
+      });
+    });
+    
+    return counts;
+  }, [skills, projects, certifications, education, experiences]);
+
+  // Sort skills by usage count (highest first), then show top 30
+  const sortedSkills = useMemo(() => {
+    return [...skills]
+      .sort((a, b) => (skillUsageCounts[b.id] || 0) - (skillUsageCounts[a.id] || 0))
+      .slice(0, 30);
+  }, [skills, skillUsageCounts]);
+
+  // Filter skills by search query
+  const filteredSkills = useMemo(() => {
+    if (!searchQuery.trim()) return sortedSkills;
+    
+    const query = searchQuery.toLowerCase().trim();
+    return skills.filter(skill => 
+      skill.name.toLowerCase().includes(query)
+    );
+  }, [skills, sortedSkills, searchQuery]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +98,18 @@ export function SkillForm() {
       alert("Skill name is required");
       return;
     }
+    
+    // Check for duplicate skill name (case-insensitive)
+    const normalizedName = formData.name.trim().toLowerCase();
+    const duplicate = skills.find(
+      s => s.name.toLowerCase() === normalizedName && s.id !== editingId
+    );
+    
+    if (duplicate) {
+      alert(`A skill named "${duplicate.name}" already exists. Please use a different name.`);
+      return;
+    }
+    
     if (editingId) {
       await updateSkill(editingId, formData);
       setEditingId(null);
@@ -86,8 +166,8 @@ export function SkillForm() {
       .filter(Boolean) as string[];
   };
 
-  // Group skills by their categories
-  const skillsByCategory = skills.reduce((acc, skill) => {
+  // Group filtered skills by their categories
+  const skillsByCategory = filteredSkills.reduce((acc, skill) => {
     const categories = getCategoryNames(skill.category_ids);
     categories.forEach((cat) => {
       if (!acc[cat]) acc[cat] = [];
@@ -244,12 +324,23 @@ export function SkillForm() {
       {/* Skills List */}
       <Card>
         <CardHeader>
-          <CardTitle>Skills ({skills.length})</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Skills ({skills.length} total, showing {searchQuery ? filteredSkills.length : "top 30"})</CardTitle>
+          </div>
+          <div className="relative mt-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search skills..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </CardHeader>
         <CardContent>
-          {skills.length === 0 ? (
+          {filteredSkills.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">
-              No skills yet. Add your first skill above.
+              {searchQuery ? "No skills found matching your search." : "No skills yet. Add your first skill above."}
             </p>
           ) : (
             <div className="space-y-6">
@@ -257,39 +348,52 @@ export function SkillForm() {
                 <div key={category}>
                   <h3 className="font-semibold mb-3 text-lg">{category}</h3>
                   <div className="flex flex-wrap gap-2">
-                    {categorySkills.map((skill) => (
-                      <div key={skill.id} className="group relative">
-                        <Badge
-                          variant="secondary"
-                          className="px-3 py-1.5 pr-16 text-sm"
-                        >
-                          {skill.logo_url && (
-                            <img
-                              src={skill.logo_url}
-                              alt=""
-                              className="w-4 h-4 mr-2 inline-block"
-                            />
-                          )}
-                          {skill.name}
-                          <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => handleEdit(skill)}
-                              className="h-6 w-6 rounded-sm flex items-center justify-center hover:bg-background/80 transition-colors"
-                              title="Edit skill"
-                            >
-                              <Pencil className="h-3 w-3" />
-                            </button>
-                            <button
-                              onClick={async () => await deleteSkill(skill.id)}
-                              className="h-6 w-6 rounded-sm flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                              title="Delete skill"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </div>
-                        </Badge>
-                      </div>
-                    ))}
+                    {categorySkills.map((skill) => {
+                      const usageCount = skillUsageCounts[skill.id] || 0;
+                      return (
+                        <div key={skill.id} className="group relative">
+                          <Badge
+                            variant="secondary"
+                            className="px-3 py-1.5 pr-20 text-sm"
+                          >
+                            {skill.logo_url && (
+                              <img
+                                src={skill.logo_url}
+                                alt=""
+                                className="w-4 h-4 mr-2 inline-block"
+                              />
+                            )}
+                            {skill.name}
+                            <span className="ml-2 text-xs text-muted-foreground font-medium">
+                              ({usageCount})
+                            </span>
+                            <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => handleEdit(skill)}
+                                className="h-6 w-6 rounded-sm flex items-center justify-center hover:bg-background/80 transition-colors"
+                                title="Edit skill"
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  if (usageCount > 0) {
+                                    if (!confirm(`This skill is used in ${usageCount} item(s). Are you sure you want to delete it?`)) {
+                                      return;
+                                    }
+                                  }
+                                  await deleteSkill(skill.id);
+                                }}
+                                className="h-6 w-6 rounded-sm flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                                title="Delete skill"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          </Badge>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))}

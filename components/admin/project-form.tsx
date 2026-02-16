@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { usePortfolio } from "./portfolio-context";
 import { ProjectFormData } from "@/lib/models/portfolio";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,15 @@ export function ProjectForm() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+
+  // Sort projects by created_at (newest first)
+  const sortedProjects = useMemo(() => {
+    return [...projects].sort((a, b) => {
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return dateB - dateA; // Newest first
+    });
+  }, [projects]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -396,7 +405,7 @@ export function ProjectForm() {
             </p>
           ) : (
             <div className="space-y-3">
-              {projects.map((project) => (
+              {sortedProjects.map((project) => (
                 <div
                   key={project.id}
                   className="group relative flex items-start gap-4 p-4 border rounded-lg hover:border-primary/50 transition-colors"
