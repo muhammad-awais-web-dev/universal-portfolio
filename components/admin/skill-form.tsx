@@ -35,6 +35,7 @@ export function SkillForm() {
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [visibleSkillsCount, setVisibleSkillsCount] = useState(10);
 
   // Calculate skill usage counts
   const skillUsageCounts = useMemo(() => {
@@ -75,22 +76,26 @@ export function SkillForm() {
     return counts;
   }, [skills, projects, certifications, education, experiences]);
 
-  // Sort skills by usage count (highest first), then show top 30
-  const sortedSkills = useMemo(() => {
+  // Sort skills by usage count (highest first)
+  const sortedAllSkills = useMemo(() => {
     return [...skills]
-      .sort((a, b) => (skillUsageCounts[b.id] || 0) - (skillUsageCounts[a.id] || 0))
-      .slice(0, 30);
+      .sort((a, b) => (skillUsageCounts[b.id] || 0) - (skillUsageCounts[a.id] || 0));
   }, [skills, skillUsageCounts]);
+
+  // Get visible skills based on current count
+  const visibleSortedSkills = useMemo(() => {
+    return sortedAllSkills.slice(0, visibleSkillsCount);
+  }, [sortedAllSkills, visibleSkillsCount]);
 
   // Filter skills by search query
   const filteredSkills = useMemo(() => {
-    if (!searchQuery.trim()) return sortedSkills;
+    if (!searchQuery.trim()) return visibleSortedSkills;
     
     const query = searchQuery.toLowerCase().trim();
-    return skills.filter(skill => 
+    return sortedAllSkills.filter(skill => 
       skill.name.toLowerCase().includes(query)
     );
-  }, [skills, sortedSkills, searchQuery]);
+  }, [sortedAllSkills, visibleSortedSkills, searchQuery]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -325,7 +330,9 @@ export function SkillForm() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Skills ({skills.length} total, showing {searchQuery ? filteredSkills.length : "top 30"})</CardTitle>
+            <CardTitle>
+              Skills ({skills.length} total, showing {searchQuery ? filteredSkills.length : visibleSkillsCount})
+            </CardTitle>
           </div>
           <div className="relative mt-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -397,6 +404,18 @@ export function SkillForm() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+          
+          {/* Show More Button */}
+          {!searchQuery && sortedAllSkills.length > visibleSkillsCount && (
+            <div className="mt-6 text-center">
+              <Button
+                variant="outline"
+                onClick={() => setVisibleSkillsCount(prev => prev + 10)}
+              >
+                Show More Skills ({sortedAllSkills.length - visibleSkillsCount} remaining)
+              </Button>
             </div>
           )}
         </CardContent>

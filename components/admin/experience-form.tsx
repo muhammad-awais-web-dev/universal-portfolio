@@ -26,6 +26,28 @@ export function ExperienceForm() {
     project_ids: [],
   });
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [visibleSkillsCount, setVisibleSkillsCount] = useState(10);
+
+  // Calculate skill usage counts
+  const skillUsageCounts = useMemo(() => {
+    const counts: Record<number, number> = {};
+    skills.forEach(skill => {
+      counts[skill.id] = 0;
+      projects.forEach(p => { if (p.skill_ids?.includes(skill.id)) counts[skill.id]++; });
+      certifications.forEach(c => { if (c.skill_ids?.includes(skill.id)) counts[skill.id]++; });
+      education.forEach(e => { if (e.skill_ids?.includes(skill.id)) counts[skill.id]++; });
+      experiences.forEach(e => { if (e.skill_ids?.includes(skill.id)) counts[skill.id]++; });
+    });
+    return counts;
+  }, [skills, projects, certifications, education, experiences]);
+
+  const sortedSkills = useMemo(() => {
+    return [...skills].sort((a, b) => (skillUsageCounts[b.id] || 0) - (skillUsageCounts[a.id] || 0));
+  }, [skills, skillUsageCounts]);
+
+  const visibleSkills = useMemo(() => {
+    return sortedSkills.slice(0, visibleSkillsCount);
+  }, [sortedSkills, visibleSkillsCount]);
 
   // Sort experiences by start_date (newest first)
   const sortedExperiences = useMemo(() => {
@@ -203,32 +225,49 @@ export function ExperienceForm() {
 
             <div>
               <Label>Skills Used</Label>
-              <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-[60px]">
+              <div className="flex flex-wrap gap-2 p-3 border rounded-md min-h-[60px] max-h-[300px] overflow-y-auto">
                 {skills.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     No skills available. Add skills first.
                   </p>
                 ) : (
-                  skills.map((skill) => (
-                    <label
-                      key={skill.id}
-                      className="flex items-center gap-2 px-3 py-1.5 border rounded-full cursor-pointer hover:bg-accent"
-                    >
-                      <Checkbox
-                        checked={formData.skill_ids?.includes(skill.id)}
-                        onCheckedChange={(checked) => {
-                          const currentSkills = formData.skill_ids || [];
-                          setFormData({
-                            ...formData,
-                            skill_ids: checked
-                              ? [...currentSkills, skill.id]
-                              : currentSkills.filter((id) => id !== skill.id),
-                          });
-                        }}
-                      />
-                      <span className="text-sm">{skill.name}</span>
-                    </label>
-                  ))
+                  <>
+                    {visibleSkills.map((skill) => {
+                      const usageCount = skillUsageCounts[skill.id] || 0;
+                      return (
+                        <label
+                          key={skill.id}
+                          className="flex items-center gap-2 px-3 py-1.5 border rounded-full cursor-pointer hover:bg-accent"
+                        >
+                          <Checkbox
+                            checked={formData.skill_ids?.includes(skill.id)}
+                            onCheckedChange={(checked) => {
+                              const currentSkills = formData.skill_ids || [];
+                              setFormData({
+                                ...formData,
+                                skill_ids: checked
+                                  ? [...currentSkills, skill.id]
+                                  : currentSkills.filter((id) => id !== skill.id),
+                              });
+                            }}
+                          />
+                          <span className="text-sm">{skill.name}</span>
+                          <span className="text-xs text-muted-foreground">({usageCount})</span>
+                        </label>
+                      );
+                    })}
+                    {sortedSkills.length > visibleSkillsCount && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setVisibleSkillsCount(prev => prev + 10)}
+                        className="w-full mt-2"
+                      >
+                        Show More Skills ({sortedSkills.length - visibleSkillsCount} remaining)
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
