@@ -52,7 +52,7 @@ export function PublishedPortfolio({ isAdmin }: PublishedPortfolioProps) {
   }
 
   // Get top skills by usage
-  const topSkills = data.skills.slice(0, 10);
+  const topSkills = data.skills?.slice(0, 10) || [];
 
   return (
     <main className="min-h-screen">
@@ -69,10 +69,10 @@ export function PublishedPortfolio({ isAdmin }: PublishedPortfolioProps) {
             title="Projects"
             description="Explore my portfolio of projects showcasing development skills and innovation."
             icon={FolderGit2}
-            count={data.projects.length}
+            count={data.projects?.length || 0}
             href="/projects"
             items={
-              data.projects.length > 0 ? (
+              data.projects && data.projects.length > 0 ? (
                 <div className="space-y-2">
                   {data.projects.slice(0, 3).map((project) => (
                     <div key={project.id} className="text-sm">
@@ -92,7 +92,7 @@ export function PublishedPortfolio({ isAdmin }: PublishedPortfolioProps) {
             title="Skills"
             description="Technologies and tools I work with across various domains."
             icon={Wrench}
-            count={data.skills.length}
+            count={data.skills?.length || 0}
             href="/skills"
             items={
               topSkills.length > 0 ? (
@@ -110,10 +110,10 @@ export function PublishedPortfolio({ isAdmin }: PublishedPortfolioProps) {
             title="Experience"
             description="My professional work experience and career journey."
             icon={Briefcase}
-            count={data.experiences.length}
+            count={data.experiences?.length || 0}
             href="/experience"
             items={
-              data.experiences.length > 0 ? (
+              data.experiences && data.experiences.length > 0 ? (
                 <div className="space-y-2">
                   {data.experiences.slice(0, 2).map((exp) => (
                     <div key={exp.id} className="text-sm">
@@ -131,10 +131,10 @@ export function PublishedPortfolio({ isAdmin }: PublishedPortfolioProps) {
             title="Education"
             description="My educational background and academic achievements."
             icon={GraduationCap}
-            count={data.education.length}
+            count={data.education?.length || 0}
             href="/education"
             items={
-              data.education.length > 0 ? (
+              data.education && data.education.length > 0 ? (
                 <div className="space-y-2">
                   {data.education.slice(0, 2).map((edu) => (
                     <div key={edu.id} className="text-sm">
@@ -152,10 +152,10 @@ export function PublishedPortfolio({ isAdmin }: PublishedPortfolioProps) {
             title="Certifications"
             description="Professional certifications and credentials that validate my expertise."
             icon={Award}
-            count={data.certifications.length}
+            count={data.certifications?.length || 0}
             href="/certifications"
             items={
-              data.certifications.length > 0 ? (
+              data.certifications && data.certifications.length > 0 ? (
                 <div className="space-y-2">
                   {data.certifications.slice(0, 2).map((cert) => (
                     <div key={cert.id} className="text-sm">
@@ -171,7 +171,7 @@ export function PublishedPortfolio({ isAdmin }: PublishedPortfolioProps) {
       </section>
 
       {/* Footer with Contact CTA */}
-      {data.profile.email && (
+      {data.profile?.email && (
         <section className="bg-muted/30 py-16 mt-12">
           <div className="max-w-3xl mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold mb-4">Let's Work Together</h2>
