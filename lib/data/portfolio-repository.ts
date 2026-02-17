@@ -155,7 +155,28 @@ export async function listProjects(ownerId?: string): Promise<Project[]> {
   if (ownerId) query = query.eq('owner_id', ownerId);
   const { data, error } = await query;
   if (error) throw new Error(`Failed to fetch projects: ${error.message}`);
-  return data as Project[];
+  
+  // Hydrate skill_ids and category_ids for each project
+  const projects = data as Project[];
+  await Promise.all(
+    projects.map(async (project) => {
+      // Fetch skill_ids
+      const { data: skillData } = await client
+        .from('project_skills')
+        .select('skill_id')
+        .eq('project_id', project.id);
+      project.skill_ids = skillData?.map((s) => s.skill_id) || [];
+      
+      // Fetch category_ids
+      const { data: categoryData } = await client
+        .from('project_categories_junction')
+        .select('category_id')
+        .eq('project_id', project.id);
+      project.category_ids = categoryData?.map((c) => c.category_id) || [];
+    })
+  );
+  
+  return projects;
 }
 
 export async function getProject(projectId: number): Promise<Project | null> {
@@ -244,7 +265,20 @@ export async function listSkills(): Promise<Skill[]> {
   const client = getClient();
   const { data, error } = await client.from('skills').select('*').order('name');
   if (error) throw new Error(`Failed to fetch skills: ${error.message}`);
-  return data as Skill[];
+  
+  // Hydrate category_ids for each skill
+  const skills = data as Skill[];
+  await Promise.all(
+    skills.map(async (skill) => {
+      const { data: categoryData } = await client
+        .from('skill_categories_junction')
+        .select('category_id')
+        .eq('skill_id', skill.id);
+      skill.category_ids = categoryData?.map((c) => c.category_id) || [];
+    })
+  );
+  
+  return skills;
 }
 
 export async function getSkill(skillId: number): Promise<Skill | null> {
@@ -331,7 +365,28 @@ export async function listCertifications(): Promise<Certification[]> {
     .select('*')
     .order('created_at', { ascending: false });
   if (error) throw new Error(`Failed to fetch certifications: ${error.message}`);
-  return data as Certification[];
+  
+  // Hydrate skill_ids and project_ids for each certification
+  const certifications = data as Certification[];
+  await Promise.all(
+    certifications.map(async (cert) => {
+      // Fetch skill_ids
+      const { data: skillData } = await client
+        .from('certification_skills')
+        .select('skill_id')
+        .eq('certification_id', cert.id);
+      cert.skill_ids = skillData?.map((s) => s.skill_id) || [];
+      
+      // Fetch project_ids
+      const { data: projectData } = await client
+        .from('certification_projects')
+        .select('project_id')
+        .eq('certification_id', cert.id);
+      cert.project_ids = projectData?.map((p) => p.project_id) || [];
+    })
+  );
+  
+  return certifications;
 }
 
 export async function getCertification(id: number): Promise<Certification | null> {
@@ -385,7 +440,28 @@ export async function listEducation(): Promise<Education[]> {
     .select('*')
     .order('start_date', { ascending: false });
   if (error) throw new Error(`Failed to fetch education: ${error.message}`);
-  return data as Education[];
+  
+  // Hydrate skill_ids and project_ids for each education entry
+  const education = data as Education[];
+  await Promise.all(
+    education.map(async (edu) => {
+      // Fetch skill_ids
+      const { data: skillData } = await client
+        .from('education_skills')
+        .select('skill_id')
+        .eq('education_id', edu.id);
+      edu.skill_ids = skillData?.map((s) => s.skill_id) || [];
+      
+      // Fetch project_ids
+      const { data: projectData } = await client
+        .from('education_projects')
+        .select('project_id')
+        .eq('education_id', edu.id);
+      edu.project_ids = projectData?.map((p) => p.project_id) || [];
+    })
+  );
+  
+  return education;
 }
 
 export async function getEducation(id: number): Promise<Education | null> {
@@ -434,7 +510,28 @@ export async function listExperience(): Promise<Experience[]> {
     .select('*')
     .order('start_date', { ascending: false });
   if (error) throw new Error(`Failed to fetch experience: ${error.message}`);
-  return data as Experience[];
+  
+  // Hydrate skill_ids and project_ids for each experience entry
+  const experiences = data as Experience[];
+  await Promise.all(
+    experiences.map(async (exp) => {
+      // Fetch skill_ids
+      const { data: skillData } = await client
+        .from('experience_skills')
+        .select('skill_id')
+        .eq('experience_id', exp.id);
+      exp.skill_ids = skillData?.map((s) => s.skill_id) || [];
+      
+      // Fetch project_ids
+      const { data: projectData } = await client
+        .from('experience_projects')
+        .select('project_id')
+        .eq('experience_id', exp.id);
+      exp.project_ids = projectData?.map((p) => p.project_id) || [];
+    })
+  );
+  
+  return experiences;
 }
 
 export async function getExperience(id: number): Promise<Experience | null> {

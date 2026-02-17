@@ -11,8 +11,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pencil, X } from "lucide-react";
 
 export function ExperienceForm() {
-  const { addExperience, updateExperience, experiences, deleteExperience, skills, projects } =
-    usePortfolio();
+  const { 
+    addExperience, 
+    updateExperience, 
+    experiences, 
+    deleteExperience, 
+    skills, 
+    projects,
+    certifications,
+    education
+  } = usePortfolio();
   const [formData, setFormData] = useState<ExperienceFormData>({
     company: "",
     title: "",
