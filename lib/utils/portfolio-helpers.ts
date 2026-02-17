@@ -20,8 +20,14 @@ export function filterPublishedData(data: PortfolioData, isAdmin: boolean): Port
   // Filter to only published items for visitors
   return {
     ...data,
-    projects: data.projects.filter((p) => p.is_published),
-    certifications: data.certifications.filter((c) => c.is_active !== false),
+    projects: data.projects?.filter((p) => p.is_published) || [],
+    certifications: data.certifications?.filter((c) => c.is_active !== false) || [],
+    education: data.education || [],
+    experiences: data.experiences || [],
+    skills: data.skills || [],
+    skillCategories: data.skillCategories || [],
+    projectCategories: data.projectCategories || [],
+    testimonials: data.testimonials || [],
   };
 }
 
