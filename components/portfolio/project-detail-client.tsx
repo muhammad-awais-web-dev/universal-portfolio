@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ExternalLink, Github } from 'lucide-react';
 import { formatDate } from '@/lib/utils/portfolio-helpers';
+import { SocialShare } from '@/components/portfolio/social-share';
 
 interface ProjectData {
   project: Project | null;
@@ -123,8 +124,8 @@ export function ProjectDetailClient({ slug }: ProjectDetailClientProps) {
             <p className="text-xl text-muted-foreground mb-6">{project.short_description}</p>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap gap-3">
+          {/* Action Buttons + Share */}
+          <div className="flex flex-wrap items-center gap-3">
             {project.live_url && (
               <Button asChild>
                 <a href={project.live_url} target="_blank" rel="noopener noreferrer">
@@ -141,6 +142,9 @@ export function ProjectDetailClient({ slug }: ProjectDetailClientProps) {
                 </a>
               </Button>
             )}
+            <div className="ml-auto">
+              <SocialShare title={project.title} />
+            </div>
           </div>
         </div>
 

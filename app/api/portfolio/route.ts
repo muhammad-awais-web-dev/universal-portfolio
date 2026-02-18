@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFullPortfolio } from '@/lib/data/portfolio-repository';
+import { getCachedPortfolio } from '@/lib/cache/portfolio-cache';
 import { withPortfolioGuard } from '@/lib/auth/portfolio-guard';
 
 /**
  * GET /api/portfolio
  * Returns the full portfolio payload in a single request.
+ * Uses server-side caching with 3-day TTL.
  * 
  * Access Rules:
  * - Same-origin requests: Public (no authentication required)
@@ -12,7 +13,7 @@ import { withPortfolioGuard } from '@/lib/auth/portfolio-guard';
  */
 async function handleGET(request: NextRequest) {
   try {
-    const portfolio = await getFullPortfolio();
+    const portfolio = await getCachedPortfolio();
     return NextResponse.json(portfolio);
   } catch (error) {
     return NextResponse.json(

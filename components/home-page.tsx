@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { NavBarWrapper } from "@/components/admin/navbar-wrapper";
 import { EnvProcessValidator } from "@/components/setup/env-process-validator";
@@ -18,6 +18,7 @@ interface HomePageProps {
 export default function HomePage({ isAdmin, forceDevMode, missingVars }: HomePageProps) {
   const [settings, setSettings] = useState<PortfolioSettings | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [emailConfigured, setEmailConfigured] = useState(false);
   const { isLoggedIn, isChecking } = useAdminSession();
 
   useEffect(() => {
@@ -28,6 +29,11 @@ export default function HomePage({ isAdmin, forceDevMode, missingVars }: HomePag
     
     setSettings(getSettings());
     setMounted(true);
+
+    // Check if email is configured
+    fetch('/api/test-email', { method: 'HEAD' })
+      .then(res => setEmailConfigured(res.ok))
+      .catch(() => setEmailConfigured(false));
   }, [forceDevMode]);
 
   if (!mounted) {
@@ -108,6 +114,6 @@ export default function HomePage({ isAdmin, forceDevMode, missingVars }: HomePag
   }
 
   // Show published mode (actual portfolio)
-  return <PublishedPortfolio isAdmin={effectiveIsAdmin} />;
+  return <PublishedPortfolio isAdmin={effectiveIsAdmin} isEmailConfigured={emailConfigured} />;
 }
 

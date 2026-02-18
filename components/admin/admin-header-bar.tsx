@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeSwitcher } from '@/components/theme-switcher';
-import { LogOut, Settings, LayoutDashboard, Home, Images } from 'lucide-react';
+import { LogOut, Settings, LayoutDashboard, Home } from 'lucide-react';
 import type { Profile } from '@/lib/models/portfolio';
 
 interface AdminNavBarProps {
@@ -19,7 +19,6 @@ export function AdminNavBar({ profile, onLogout }: AdminNavBarProps) {
   const navItems = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/protected/manage', label: 'Manage', icon: LayoutDashboard },
-    { href: '/protected/media-library', label: 'Media', icon: Images },
     { href: '/protected/settings', label: 'Settings', icon: Settings },
   ];
 

@@ -78,6 +78,19 @@ export default function ProjectsPage() {
     return matchesSearch && matchesCategory;
   });
 
+  // Filter categories to only show those that have projects
+  const activeCategories = data.projectCategories.filter((category) =>
+    data.projects.some((project) => project.category_ids?.includes(category.id))
+  );
+
+  // Count projects per category
+  const categoryCounts = activeCategories.reduce((acc, category) => {
+    acc[category.id] = data.projects.filter((project) =>
+      project.category_ids?.includes(category.id)
+    ).length;
+    return acc;
+  }, {} as Record<number, number>);
+
   return (
     <main className="min-h-screen">
       <NavBarWrapper />
@@ -104,7 +117,7 @@ export default function ProjectsPage() {
             />
           </div>
 
-          {data.projectCategories.length > 0 && (
+          {activeCategories.length > 0 && (
             <div className="flex flex-wrap gap-2 items-center">
               <Filter className="h-4 w-4 text-muted-foreground" />
               <Button
@@ -112,16 +125,16 @@ export default function ProjectsPage() {
                 size="sm"
                 onClick={() => setSelectedCategory(null)}
               >
-                All Categories
+                All Projects ({data.projects.length})
               </Button>
-              {data.projectCategories.map((category) => (
+              {activeCategories.map((category) => (
                 <Button
                   key={category.id}
                   variant={selectedCategory === category.id ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setSelectedCategory(category.id)}
                 >
-                  {category.name}
+                  {category.name} ({categoryCounts[category.id]})
                 </Button>
               ))}
             </div>

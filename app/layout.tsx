@@ -9,8 +9,28 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Next.js and Supabase Starter Kit",
-  description: "The fastest way to build apps with Next.js and Supabase",
+  title: {
+    default: 'Portfolio',
+    template: '%s | Portfolio',
+  },
+  description: 'Personal portfolio showcasing projects, experience, education, and certifications.',
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: defaultUrl,
+    siteName: 'Portfolio',
+    title: 'Portfolio',
+    description: 'Personal portfolio showcasing projects, experience, education, and certifications.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Portfolio',
+    description: 'Personal portfolio showcasing projects, experience, education, and certifications.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 const geistSans = Geist({

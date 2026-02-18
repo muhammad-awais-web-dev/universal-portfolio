@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ImageUpload } from '@/components/ui/image-upload';
-import { CheckCircle2, AlertCircle, Save, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Save, ShieldAlert, Trash2 } from 'lucide-react';
 import { getSettings, updateSettings, type PortfolioSettings } from '@/lib/settings';
 
 export function GeneralSettings() {
@@ -17,6 +17,8 @@ export function GeneralSettings() {
   const [saved, setSaved] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [forceDevMode, setForceDevMode] = useState(false);
+  const [clearingCache, setClearingCache] = useState(false);
+  const [cacheCleared, setCacheCleared] = useState(false);
 
   useEffect(() => {
     setSettings(getSettings());
@@ -53,6 +55,28 @@ export function GeneralSettings() {
 
   const handleFaviconUpload = (url: string) => {
     setSettings(prev => prev ? { ...prev, favicon: url } : null);
+  };
+
+  const handleClearCache = async () => {
+    setClearingCache(true);
+    setCacheCleared(false);
+    
+    try {
+      const response = await fetch('/api/cache/clear', {
+        method: 'POST',
+      });
+      
+      if (response.ok) {
+        setCacheCleared(true);
+        setTimeout(() => setCacheCleared(false), 3000);
+      } else {
+        console.error('Failed to clear cache');
+      }
+    } catch (error) {
+      console.error('Error clearing cache:', error);
+    } finally {
+      setClearingCache(false);
+    }
   };
 
   return (
@@ -227,32 +251,48 @@ export function GeneralSettings() {
         </CardContent>
       </Card>
 
-      {/* Global Library */}
+      {/* Cache Management */}
       <Card>
         <CardHeader>
-          <CardTitle>Global Library</CardTitle>
+          <CardTitle>Cache Management</CardTitle>
           <CardDescription>
-            Set a global library ID for your portfolio assets
+            Clear the portfolio data cache to force fresh data loading
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Label htmlFor="global-library">Library ID</Label>
-            <Input
-              id="global-library"
-              value={settings.globalLibrary || ''}
-              onChange={(e) => 
-                setSettings(prev => prev ? { 
-                  ...prev, 
-                  globalLibrary: e.target.value || null 
-                } : null)
-              }
-              placeholder="Enter library ID (optional)"
-            />
-            <p className="text-sm text-muted-foreground">
-              This ID will be used for organizing your portfolio assets
-            </p>
+        <CardContent className="space-y-4">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1 flex-1">
+              <Label>Portfolio Data Cache</Label>
+              <p className="text-sm text-muted-foreground">
+                Portfolio data is cached for 3 days to improve performance. Clear the cache if you've made changes and want to see them immediately.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleClearCache}
+              disabled={clearingCache}
+              className="ml-4"
+            >
+              {clearingCache ? (
+                'Clearing...'
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Clear Cache
+                </>
+              )}
+            </Button>
           </div>
+          
+          {cacheCleared && (
+            <Alert className="border-green-600 bg-green-50">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-600">
+                Cache cleared successfully! Fresh data will be loaded on next page load.
+              </AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
 
