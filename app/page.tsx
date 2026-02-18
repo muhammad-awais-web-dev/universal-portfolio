@@ -12,7 +12,10 @@ async function HomeContent() {
 
   // Check if critical env vars are missing
   const { isValid: envValid, missing: missingVars } = checkCriticalEnvVars();
-  const forceDevMode = !envValid;
+
+  // ENVIRONMENT=development (case-insensitive) forces dev mode
+  const envFlag = (process.env.ENVIRONMENT || '').toLowerCase();
+  const forceDevMode = !envValid || envFlag === 'development';
 
   return (
     <HomePage 

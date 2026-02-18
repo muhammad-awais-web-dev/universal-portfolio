@@ -8,25 +8,21 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ImageUpload } from '@/components/ui/image-upload';
-import { CheckCircle2, AlertCircle, Save, ShieldAlert, Trash2 } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Save, Trash2 } from 'lucide-react';
 import { getSettings, updateSettings, type PortfolioSettings } from '@/lib/settings';
+
 
 export function GeneralSettings() {
   const [settings, setSettings] = useState<PortfolioSettings | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [forceDevMode, setForceDevMode] = useState(false);
   const [clearingCache, setClearingCache] = useState(false);
   const [cacheCleared, setCacheCleared] = useState(false);
 
   useEffect(() => {
     setSettings(getSettings());
     setMounted(true);
-    // Check if dev mode is forced
-    if (typeof window !== 'undefined' && (window as any).__CRITICAL_ENV_MISSING) {
-      setForceDevMode(true);
-    }
   }, []);
 
   if (!mounted || !settings) {
@@ -35,17 +31,12 @@ export function GeneralSettings() {
 
   const handleSave = () => {
     if (!settings) return;
-    
     setSaving(true);
     updateSettings(settings);
-    
     setTimeout(() => {
       setSaving(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-      
-      // Trigger page reload to apply mode change
-      window.location.reload();
     }, 500);
   };
 
@@ -81,57 +72,6 @@ export function GeneralSettings() {
 
   return (
     <div className="space-y-6">
-      {/* Critical Env Warning */}
-      {forceDevMode && (
-        <Alert variant="destructive">
-          <ShieldAlert className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Development mode is auto-enforced.</strong> Critical environment variables are missing. 
-            Configure required variables (Supabase, Admin Passphrase, Cloudinary) to enable published mode.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Portfolio Mode */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Portfolio Mode</CardTitle>
-          <CardDescription>
-            Control whether your portfolio is in development or published mode
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Development Mode</Label>
-              <p className="text-sm text-muted-foreground">
-                When enabled, shows environment checker on home page
-              </p>
-            </div>
-            <Switch
-              checked={settings.mode === 'development'}
-              onCheckedChange={(checked) => 
-                setSettings(prev => prev ? { 
-                  ...prev, 
-                  mode: checked ? 'development' : 'published' 
-                } : null)
-              }
-              disabled={forceDevMode}
-            />
-          </div>
-          
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {forceDevMode 
-                ? 'Development mode is locked until critical environment variables are configured.'
-                : settings.mode === 'development' 
-                  ? 'Your portfolio is in development mode. The home page shows environment status.'
-                  : 'Your portfolio is published. The home page shows your portfolio content.'}
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
 
       {/* MCP Server */}
       <Card>
