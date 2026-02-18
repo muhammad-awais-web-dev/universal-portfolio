@@ -1,5 +1,4 @@
 export interface PortfolioSettings {
-  mode: 'development' | 'published';
   mcpEnabled: boolean;
   websiteName: string;
   logo: string | null;
@@ -8,7 +7,6 @@ export interface PortfolioSettings {
 }
 
 export const DEFAULT_SETTINGS: PortfolioSettings = {
-  mode: 'development',
   mcpEnabled: false,
   websiteName: 'My Portfolio',
   logo: null,
@@ -54,17 +52,8 @@ export function getSettings(): PortfolioSettings {
   try {
     const stored = localStorage.getItem(SETTINGS_KEY);
     if (!stored) return DEFAULT_SETTINGS;
-    
     const parsed = JSON.parse(stored);
-    const settings = { ...DEFAULT_SETTINGS, ...parsed };
-    
-    // Force development mode if critical env vars are missing
-    // This check runs client-side, so we check via a flag from server
-    if (typeof window !== 'undefined' && (window as any).__CRITICAL_ENV_MISSING) {
-      settings.mode = 'development';
-    }
-    
-    return settings;
+    return { ...DEFAULT_SETTINGS, ...parsed };
   } catch (error) {
     console.error('Error loading settings:', error);
     return DEFAULT_SETTINGS;
