@@ -1,404 +1,333 @@
-# Universal Portfolio MCP Server
+# API Endpoint Testing Guide
 
 ## Overview
-This MCP (Model Context Protocol) server provides read-only API access to your portfolio data for AI agents. All endpoints require authentication via API key.
 
-## Quick Start
+This guide shows how to test your portfolio API endpoints using `curl` in the terminal.
 
-### 1. Generate API Key (Two Options)
+## Prerequisites
 
-**Option A: Via Admin UI (Recommended)**
-1. Log in to your admin panel at `/protected/manage`
-2. Navigate to Settings (`/protected/settings`)
-3. Enter a name for your API key (e.g., "Production Key")
-4. Click "Create API Key"
-5. **Important:** Copy the key immediately - it won't be shown again!
+1. **Dev server must be running:**
+   ```bash
+   npm run dev
+   ```
 
-**Option B: Environment Variable (Legacy)**
+2. **Base URL:** `http://localhost:3000`
+
+## Authentication Methods
+
+### Method 1: MCP API Key (Read-Only)
+For MCP endpoints that don't require user authentication:
+
 ```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+API_KEY="71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
 ```
 
-### 2. Configure Environment Variables
-Add to `.env.local`:
+### Method 2: Session Cookies (Full Access)
+For portfolio endpoints that require authentication:
+
 ```bash
-# Enable MCP Server
-MCP_ENABLED=true
-
-# Legacy fallback key (optional - if no database keys exist)
-MCP_API_KEY=<your-generated-key>
-
-# Database connection (required)
-SUPABASE_URL=<your-supabase-url>
-SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
-
-# Admin access (required for settings page)
-ADMIN_PASSPHRASE=<your-125-character-passphrase>
+# First, login via browser and export cookies
+# Chrome: Install "EditThisCookie" extension
+# Firefox: Use "Cookie Quick Manager" extension
+# Export cookies to cookies.txt in Netscape format
 ```
-
-### 3. Deploy to Vercel
-```bash
-# Add environment variables in Vercel dashboard
-vercel env add MCP_ENABLED
-vercel env add SUPABASE_URL
-vercel env add SUPABASE_SERVICE_ROLE_KEY
-vercel env add ADMIN_PASSPHRASE
-
-# Optional: Add legacy fallback key
-vercel env add MCP_API_KEY
-
-# Deploy
-vercel --prod
-```
-
-## Authentication
-
-The MCP server supports two authentication methods:
-
-1. **Database-backed API Keys** (Recommended)
-   - Managed via Settings page
-   - Can enable/disable keys without redeployment
-   - Track last usage timestamps
-   - Multiple keys supported
-
-2. **Environment Variable** (Legacy Fallback)
-   - Uses `MCP_API_KEY` from environment
-   - Only used if no database keys are configured
-   - Maintained for backward compatibility
 
 ## API Endpoints
 
-### Manifest
-Discover all available tools, their schemas, and AI-friendly usage instructions.
+### 1. Portfolio Data (Public/Published)
 
-**Endpoint:** `GET /api/mcp/manifest`
-
-**Response includes:**
-- List of all available tools
-- System instructions for AI agents
-- Request/response format documentation
-- Best practices and error handling
-
-**Example:**
+#### Get All Portfolio Data
 ```bash
-curl https://your-site.vercel.app/api/mcp/manifest \
-  -H "x-mcp-api-key: YOUR_API_KEY"
+# No auth needed - returns published data only
+curl -X GET http://localhost:3000/api/portfolio
 ```
 
-### Unified Router (Recommended)
-Call any tool via a single POST endpoint.
-
-**Endpoint:** `POST /api/mcp`
-
-**Request Body:**
-```json
-{
-  "tool": "list_projects",
-  "parameters": {
-    "category": "Web",
-    "limit": 5
-  }
-}
+#### Get Specific Project by Slug
+```bash
+curl -X GET "http://localhost:3000/api/portfolio?slug=linkedin-comment"
 ```
 
-**Example:**
+### 2. MCP Endpoints (Read-Only with API Key)
+
+#### List All Skills
 ```bash
-curl -X POST https://your-site.vercel.app/api/mcp \
-  -H "x-mcp-api-key: YOUR_API_KEY" \
+curl -X GET http://localhost:3000/api/mcp/skills \
+  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
+```
+
+#### Get Single Skill
+```bash
+curl -X GET http://localhost:3000/api/mcp/skills/SKILL_ID \
+  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
+```
+
+#### List All Projects
+```bash
+curl -X GET http://localhost:3000/api/mcp/projects \
+  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
+```
+
+#### List All Certifications
+```bash
+curl -X GET http://localhost:3000/api/mcp/certifications \
+  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
+```
+
+#### List All Education
+```bash
+curl -X GET http://localhost:3000/api/mcp/education \
+  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
+```
+
+#### List All Experience
+```bash
+curl -X GET http://localhost:3000/api/mcp/experience \
+  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
+```
+
+#### List Skill Categories
+```bash
+curl -X GET http://localhost:3000/api/mcp/skill-categories \
+  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
+```
+
+#### List Project Categories
+```bash
+curl -X GET http://localhost:3000/api/mcp/project-categories \
+  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
+```
+
+### 3. Protected Portfolio Endpoints (Requires Auth)
+
+**Note:** These require valid session cookies. You need to be logged in.
+
+#### Create New Skill
+```bash
+curl -X POST http://localhost:3000/api/portfolio/skills \
+  -b cookies.txt \
   -H "Content-Type: application/json" \
-  -d '{"tool":"list_projects","parameters":{"limit":5}}'
+  -d '{
+    "name": "New Technology",
+    "category_ids": [1]
+  }'
 ```
 
-### Profile
-Get portfolio owner's profile information.
-
-**Endpoint:** `GET /api/mcp/profile`
-
-**Example:**
+#### Update Skill
 ```bash
-curl https://your-site.vercel.app/api/mcp/profile \
-  -H "x-mcp-api-key: YOUR_API_KEY"
+curl -X PUT http://localhost:3000/api/portfolio/skills/SKILL_ID \
+  -b cookies.txt \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Updated Name",
+    "category_ids": [1, 2]
+  }'
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "...",
-    "full_name": "John Doe",
-    "tagline": "Full Stack Developer",
-    "bio": "...",
-    "email": "john@example.com",
-    "github": "johndoe",
-    "linkedin": "johndoe"
-  },
-  "timestamp": "2026-02-13T17:00:00.000Z"
-}
-```
-
-### Projects
-
-#### List Projects
-**Endpoint:** `GET /api/mcp/projects`
-
-**Query Parameters:**
-- `category` (optional): Filter by category name
-- `skill` (optional): Filter by skill name
-- `page` (optional): Page number (default: 1)
-- `limit` (optional): Results per page (default: 10, max: 50)
-
-**Example:**
+#### Delete Skill
 ```bash
-# List all projects
-curl https://your-site.vercel.app/api/mcp/projects \
-  -H "x-mcp-api-key: YOUR_API_KEY"
-
-# Filter by category with pagination
-curl "https://your-site.vercel.app/api/mcp/projects?category=Web&page=1&limit=5" \
-  -H "x-mcp-api-key: YOUR_API_KEY"
+curl -X DELETE http://localhost:3000/api/portfolio/skills/SKILL_ID \
+  -b cookies.txt
 ```
 
-#### Get Project
-**Endpoint:** `GET /api/mcp/projects/{id-or-slug}`
-
-**Example:**
+#### Create New Project
 ```bash
-# By ID
-curl https://your-site.vercel.app/api/mcp/projects/123 \
-  -H "x-mcp-api-key: YOUR_API_KEY"
-
-# By slug
-curl https://your-site.vercel.app/api/mcp/projects/my-awesome-project \
-  -H "x-mcp-api-key: YOUR_API_KEY"
+curl -X POST http://localhost:3000/api/portfolio/projects \
+  -b cookies.txt \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Test Project",
+    "slug": "test-project",
+    "description": "A test project",
+    "body": "<p>Full description here</p>",
+    "is_published": false,
+    "skill_ids": [1, 2, 3],
+    "category_ids": [1]
+  }'
 ```
 
-### Skills
-
-#### List Skills
-**Endpoint:** `GET /api/mcp/skills`
-
-**Query Parameters:**
-- `category` (optional): Filter by category name
-- `page` (optional): Page number (default: 1)
-- `limit` (optional): Results per page (default: 20, max: 100)
-
-**Example:**
+#### Update Project
 ```bash
-curl https://your-site.vercel.app/api/mcp/skills \
-  -H "x-mcp-api-key: YOUR_API_KEY"
+curl -X PUT http://localhost:3000/api/portfolio/projects/PROJECT_ID \
+  -b cookies.txt \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Updated Title",
+    "is_published": true
+  }'
 ```
 
-#### Get Skill
-**Endpoint:** `GET /api/mcp/skills/{id-or-name}`
+## Useful Testing Patterns
 
-**Example:**
+### 1. Pretty Print JSON Response
 ```bash
-# By ID
-curl https://your-site.vercel.app/api/mcp/skills/5 \
-  -H "x-mcp-api-key: YOUR_API_KEY"
-
-# By name
-curl https://your-site.vercel.app/api/mcp/skills/TypeScript \
-  -H "x-mcp-api-key: YOUR_API_KEY"
+curl -X GET http://localhost:3000/api/portfolio | jq '.'
 ```
 
-### Certifications
-
-#### List Certifications
-**Endpoint:** `GET /api/mcp/certifications`
-
-**Query Parameters:**
-- `page` (optional): Page number (default: 1)
-- `limit` (optional): Results per page (default: 10, max: 50)
-
-**Example:**
+### 2. Save Response to File
 ```bash
-curl https://your-site.vercel.app/api/mcp/certifications \
-  -H "x-mcp-api-key: YOUR_API_KEY"
+curl -X GET http://localhost:3000/api/portfolio > response.json
 ```
 
-#### Get Certification
-**Endpoint:** `GET /api/mcp/certifications/{id}`
-
-### Education
-
-#### List Education
-**Endpoint:** `GET /api/mcp/education`
-
-**Query Parameters:**
-- `page` (optional): Page number (default: 1)
-- `limit` (optional): Results per page (default: 10, max: 50)
-
-#### Get Education
-**Endpoint:** `GET /api/mcp/education/{id}`
-
-### Experience
-
-#### List Experience
-**Endpoint:** `GET /api/mcp/experience`
-
-**Query Parameters:**
-- `page` (optional): Page number (default: 1)
-- `limit` (optional): Results per page (default: 10, max: 50)
-
-#### Get Experience
-**Endpoint:** `GET /api/mcp/experience/{id}`
-
-### Testimonials
-
-#### List Testimonials
-**Endpoint:** `GET /api/mcp/testimonials`
-
-**Query Parameters:**
-- `featured` (optional): Filter for featured testimonials (`true`/`false`)
-- `page` (optional): Page number (default: 1)
-- `limit` (optional): Results per page (default: 10, max: 50)
-
-**Example:**
+### 3. Check Only HTTP Status
 ```bash
-# List featured testimonials
-curl "https://your-site.vercel.app/api/mcp/testimonials?featured=true" \
-  -H "x-mcp-api-key: YOUR_API_KEY"
+curl -X GET http://localhost:3000/api/portfolio -w "\nHTTP Status: %{http_code}\n" -o /dev/null -s
 ```
 
-#### Get Testimonial
-**Endpoint:** `GET /api/mcp/testimonials/{id}`
-
-## Response Format
-
-All endpoints return JSON in this format:
-
-**Success Response:**
-```json
-{
-  "success": true,
-  "data": { ... },
-  "timestamp": "2026-02-13T17:00:00.000Z"
-}
-```
-
-**Error Response:**
-```json
-{
-  "success": false,
-  "error": "Error message",
-  "timestamp": "2026-02-13T17:00:00.000Z"
-}
-```
-
-## Authentication
-
-All requests must include the API key in the header:
-```
-x-mcp-api-key: YOUR_API_KEY
-```
-
-**Unauthorized Response (401):**
-```json
-{
-  "success": false,
-  "error": "Unauthorized: Invalid or missing API key",
-  "timestamp": "2026-02-13T17:00:00.000Z"
-}
-```
-
-## AI Agent Configuration
-
-### Claude Desktop
-Add to `claude_desktop_config.json`:
-```json
-{
-  "mcpServers": {
-    "portfolio": {
-      "url": "https://your-site.vercel.app/api/mcp",
-      "headers": {
-        "x-mcp-api-key": "YOUR_API_KEY"
-      }
-    }
-  }
-}
-```
-
-### Custom MCP Client
-```typescript
-const response = await fetch('https://your-site.vercel.app/api/mcp/projects', {
-  headers: {
-    'x-mcp-api-key': process.env.MCP_API_KEY,
-  },
-});
-
-const { success, data, error } = await response.json();
-```
-
-## Data Filtering
-
-The MCP server enforces the following filters:
-- **Projects**: Only published projects (`is_published = true`)
-- **Testimonials**: Only active testimonials (`is_active = true`)
-- **Certifications**: Only active certifications (`is_active = true`)
-
-## Security Notes
-
-1. **Never commit** your API key to version control
-2. **Store securely** in environment variables
-3. **Rotate regularly** if compromised
-4. **Use HTTPS** - API keys sent over HTTP can be intercepted
-5. **Monitor usage** via Vercel analytics
-
-## Rate Limiting
-
-Vercel serverless functions have built-in rate limiting:
-- Free tier: 100 requests per 10 seconds per IP
-- Pro tier: Higher limits available
-
-## Troubleshooting
-
-**401 Unauthorized:**
-- Check API key is set in environment variables
-- Verify `MCP_ENABLED=true` is set
-- Ensure header is `x-mcp-api-key` (case-sensitive)
-
-**500 Internal Server Error:**
-- Check Supabase credentials are correct
-- Verify database migrations have been applied
-- Check Vercel function logs for details
-
-**Empty Results:**
-- Ensure you have published projects/active testimonials in database
-- Check RLS policies in Supabase
-
-## Development
-
-### Local Testing
+### 4. Test with Verbose Output
 ```bash
-# Install dependencies
-npm install
-
-# Set up .env.local
-cp .env.example .env.local
-# Edit .env.local with your keys
-
-# Run dev server
-npm run dev
-
-# Test endpoint
-curl http://localhost:3000/api/mcp/profile \
-  -H "x-mcp-api-key: YOUR_API_KEY"
+curl -v -X GET http://localhost:3000/api/portfolio
 ```
 
-### Adding New Endpoints
+### 5. Filter Specific Field with jq
+```bash
+# Get only project titles
+curl -X GET http://localhost:3000/api/portfolio | jq '.projects[].title'
 
-1. Add tool schema to `lib/mcp/schemas.ts`
-2. Add service function to `lib/mcp/service.ts`
-3. Create API route in `app/api/mcp/{name}/route.ts`
-4. Use `withAuth()` wrapper for authentication
-5. Return responses via `mcpResponse()` helper
+# Count skills
+curl -X GET http://localhost:3000/api/portfolio | jq '.skills | length'
 
-## Support
+# Get skills in specific category
+curl -X GET http://localhost:3000/api/mcp/skills \
+  -H "x-api-key: YOUR_KEY" | \
+  jq '.skills[] | select(.category_ids | contains([1]))'
+```
 
-For issues or questions:
-1. Check Vercel function logs
-2. Verify environment variables
-3. Test Supabase connection
-4. Review API response error messages
+## Testing Scenarios
+
+### Scenario 1: Verify Skill Categorization
+```bash
+# After running assign-all-skills.sql
+curl -X GET http://localhost:3000/api/mcp/skills \
+  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69" | \
+  jq '[.skills[] | {name: .name, categories: .category_ids}] | .[0:10]'
+```
+
+### Scenario 2: Check Published Projects
+```bash
+# Public endpoint - should only return published
+curl -X GET http://localhost:3000/api/portfolio | \
+  jq '.projects[] | {title: .title, published: .is_published}'
+```
+
+### Scenario 3: Verify Project Categories
+```bash
+# After running assign-project-categories.sql
+curl -X GET http://localhost:3000/api/mcp/projects \
+  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69" | \
+  jq '.projects[] | {title: .title, categories: .category_ids}'
+```
+
+### Scenario 4: Test Skill Usage Counts
+```bash
+# Get skills with their IDs to verify counts in UI
+curl -X GET http://localhost:3000/api/mcp/skills \
+  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69" | \
+  jq '.skills[] | {id: .id, name: .name, usage: (.skill_ids // [] | length)}'
+```
+
+## Environment Setup
+
+### Install jq (JSON processor)
+```bash
+# Ubuntu/Debian
+sudo apt-get install jq
+
+# macOS
+brew install jq
+
+# Verify installation
+jq --version
+```
+
+### Create Cookies File
+
+#### Option 1: Export from Browser
+1. Login to your app at `http://localhost:3000`
+2. Install cookie extension (EditThisCookie for Chrome)
+3. Export cookies in Netscape format
+4. Save as `cookies.txt` in project root
+
+#### Option 2: Manual Cookie Extraction
+```bash
+# In browser DevTools → Application → Cookies
+# Copy the session cookie value and create:
+echo "localhostFALSE/FALSE0next-auth.session-tokenYOUR_TOKEN_HERE" > cookies.txt
+```
+
+## Common Issues
+
+### Issue 1: "Unauthorized" Response
+**Solution:** Make sure you're using the correct API key or have valid session cookies
+
+```bash
+# Test MCP endpoint
+curl -X GET http://localhost:3000/api/mcp/skills \
+  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69" -v
+```
+
+### Issue 2: "Method Not Allowed"
+**Solution:** MCP endpoints are READ-ONLY, use portfolio endpoints for mutations
+
+```bash
+# ❌ Wrong - MCP endpoints don't support POST
+curl -X POST http://localhost:3000/api/mcp/skills ...
+
+# ✅ Correct - Use portfolio endpoint
+curl -X POST http://localhost:3000/api/portfolio/skills -b cookies.txt ...
+```
+
+### Issue 3: CORS Errors
+**Solution:** Use `-H "Origin: http://localhost:3000"` for browser-like requests
+
+```bash
+curl -X GET http://localhost:3000/api/portfolio \
+  -H "Origin: http://localhost:3000"
+```
+
+### Issue 4: Cookie File Not Working
+**Solution:** Check cookie file format (must be Netscape format)
+
+```bash
+# Verify cookie file format
+cat cookies.txt
+
+# Should look like:
+# localhostFALSE/FALSE0cookie_namecookie_value
+```
+
+## Quick Reference
+
+### Available Endpoints
+
+| Endpoint | Method | Auth | Purpose |
+|----------|--------|------|---------|
+| `/api/portfolio` | GET | None | Get published portfolio data |
+| `/api/mcp/skills` | GET | API Key | List all skills |
+| `/api/mcp/projects` | GET | API Key | List all projects |
+| `/api/mcp/certifications` | GET | API Key | List all certifications |
+| `/api/mcp/education` | GET | API Key | List all education |
+| `/api/mcp/experience` | GET | API Key | List all experience |
+| `/api/mcp/skill-categories` | GET | API Key | List skill categories |
+| `/api/mcp/project-categories` | GET | API Key | List project categories |
+| `/api/portfolio/skills` | POST/PUT/DELETE | Cookies | Manage skills |
+| `/api/portfolio/projects` | POST/PUT/DELETE | Cookies | Manage projects |
+| `/api/portfolio/certifications` | POST/PUT/DELETE | Cookies | Manage certifications |
+| `/api/portfolio/education` | POST/PUT/DELETE | Cookies | Manage education |
+| `/api/portfolio/experience` | POST/PUT/DELETE | Cookies | Manage experience |
+
+### HTTP Status Codes
+
+- `200` - Success
+- `201` - Created
+- `400` - Bad Request (check your JSON)
+- `401` - Unauthorized (missing/invalid auth)
+- `403` - Forbidden (valid auth, insufficient permissions)
+- `404` - Not Found
+- `405` - Method Not Allowed (wrong HTTP method)
+- `500` - Internal Server Error
+
+---
+
+**Created:** February 17, 2026  
+**Version:** 1.0  
+**API Key (Read-Only):** `71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69`
