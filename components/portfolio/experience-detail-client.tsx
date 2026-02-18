@@ -105,7 +105,7 @@ export function ExperienceDetailClient({ id }: ExperienceDetailClientProps) {
         {exp.body_html && (
           <div className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Role Details</h2>
-            <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none"
+            <div className="rich-content"
               dangerouslySetInnerHTML={{ __html: exp.body_html }} />
           </div>
         )}
