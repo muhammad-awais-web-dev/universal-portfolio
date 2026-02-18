@@ -124,7 +124,7 @@ export function CertificationDetailClient({ id }: CertificationDetailClientProps
         {cert.body_html && (
           <div className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">Details</h2>
-            <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none"
+            <div className="rich-content"
               dangerouslySetInnerHTML={{ __html: cert.body_html }} />
           </div>
         )}

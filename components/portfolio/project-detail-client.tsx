@@ -176,7 +176,7 @@ export function ProjectDetailClient({ slug }: ProjectDetailClientProps) {
           <div className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">About This Project</h2>
             <div
-              className="prose prose-sm md:prose-base dark:prose-invert max-w-none"
+              className="rich-content"
               dangerouslySetInnerHTML={{ __html: project.body_html }}
             />
           </div>
