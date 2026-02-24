@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
+import { PORTFOLIO_CACHE_TAG } from '@/lib/cache/portfolio-cache';
 import { requireAuth } from '@/lib/auth/api-guard';
 import { deleteProject, getProject, updateProject } from '@/lib/data/portfolio-repository';
 import { projectUpdateSchema } from '@/lib/schemas/portfolio';
@@ -30,6 +32,7 @@ export async function PUT(request: Request, { params }: { params: Params }) {
     const payload = await request.json();
     const parsed = projectUpdateSchema.parse({ ...payload, id: Number(projectId) });
     const project = await updateProject(parsed);
+    revalidateTag(PORTFOLIO_CACHE_TAG, 'max');
     return NextResponse.json({ project });
   } catch (error) {
     const status = error instanceof Error && error.name === 'ZodError' ? 422 : 500;
@@ -47,6 +50,7 @@ export async function DELETE(_: Request, { params }: { params: Params }) {
   try {
     const { projectId } = await params;
     await deleteProject(Number(projectId));
+    revalidateTag(PORTFOLIO_CACHE_TAG, 'max');
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(

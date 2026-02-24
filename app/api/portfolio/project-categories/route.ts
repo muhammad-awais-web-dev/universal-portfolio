@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
+import { PORTFOLIO_CACHE_TAG } from '@/lib/cache/portfolio-cache';
 import { requireAuth } from '@/lib/auth/api-guard';
 import {
   listProjectCategories,
@@ -24,7 +26,8 @@ export async function POST(request: Request) {
   try {
     const { name } = await request.json();
     if (!name || typeof name !== 'string' || !name.trim()) {
-      return NextResponse.json({ error: 'name is required' }, { status: 422 });
+      revalidateTag(PORTFOLIO_CACHE_TAG, 'max');
+    return NextResponse.json({ error: 'name is required' }, { status: 422 });
     }
     const category = await createProjectCategory(name);
     return NextResponse.json({ category }, { status: 201 });

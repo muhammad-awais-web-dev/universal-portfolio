@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
+import { PORTFOLIO_CACHE_TAG } from '@/lib/cache/portfolio-cache';
 import { requireAuth } from '@/lib/auth/api-guard';
 import { getSkill, updateSkill, deleteSkill } from '@/lib/data/portfolio-repository';
 import { skillUpdateSchema } from '@/lib/schemas/portfolio';
@@ -28,6 +30,7 @@ export async function PUT(request: Request, { params }: { params: Params }) {
     const payload = await request.json();
     const parsed = skillUpdateSchema.parse({ ...payload, id: Number(skillId) });
     const skill = await updateSkill(parsed);
+    revalidateTag(PORTFOLIO_CACHE_TAG, 'max');
     return NextResponse.json({ skill });
   } catch (error) {
     const status = error instanceof Error && error.name === 'ZodError' ? 422 : 500;
@@ -45,6 +48,7 @@ export async function DELETE(_: Request, { params }: { params: Params }) {
   try {
     const { skillId } = await params;
     await deleteSkill(Number(skillId));
+    revalidateTag(PORTFOLIO_CACHE_TAG, 'max');
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
