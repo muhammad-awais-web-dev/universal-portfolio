@@ -659,7 +659,7 @@ export async function getFullPortfolio() {
     projectCategories,
     certifications,
     education,
-    experience,
+    experiences: experience,
     testimonials,
   };
 }

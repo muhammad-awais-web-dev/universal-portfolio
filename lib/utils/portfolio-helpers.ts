@@ -27,7 +27,7 @@ export function filterPublishedData(data: PortfolioData, isAdmin: boolean): Port
     skills: data.skills || [],
     skillCategories: data.skillCategories || [],
     projectCategories: data.projectCategories || [],
-    testimonials: data.testimonials || [],
+    testimonials: data.testimonials?.filter((t) => t.is_active !== false) || [],
   };
 }
 

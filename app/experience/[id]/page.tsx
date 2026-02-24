@@ -5,7 +5,7 @@ import { ExperienceDetailClient } from '@/components/portfolio/experience-detail
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const data = await getCachedPortfolio();
-  const exp = data?.experience?.find((e) => String(e.id) === id);
+  const exp = data?.experiences?.find((e: { id: number }) => String(e.id) === id);
 
   if (!exp) {
     return { title: 'Experience Not Found' };
