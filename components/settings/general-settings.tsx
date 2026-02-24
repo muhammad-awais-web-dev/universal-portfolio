@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -154,10 +155,13 @@ export function GeneralSettings() {
           {settings.logo && (
             <div className="mt-4">
               <p className="text-sm text-muted-foreground mb-2">Current logo:</p>
-              <img 
-                src={settings.logo} 
-                alt="Logo" 
+              <Image
+                src={settings.logo}
+                alt="Logo"
+                width={160}
+                height={64}
                 className="h-16 w-auto object-contain border rounded p-2"
+                unoptimized
               />
             </div>
           )}
@@ -181,10 +185,13 @@ export function GeneralSettings() {
           {settings.favicon && (
             <div className="mt-4">
               <p className="text-sm text-muted-foreground mb-2">Current favicon:</p>
-              <img 
-                src={settings.favicon} 
-                alt="Favicon" 
+              <Image
+                src={settings.favicon}
+                alt="Favicon"
+                width={32}
+                height={32}
                 className="h-8 w-8 object-contain border rounded"
+                unoptimized
               />
             </div>
           )}
