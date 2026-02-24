@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { getCachedPortfolio } from "@/lib/cache/portfolio-cache";
+import { getCachedPublicSettings } from "@/lib/settings/cached";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -9,12 +10,18 @@ const defaultUrl = process.env.VERCEL_URL
   : "http://localhost:3000";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const data = await getCachedPortfolio().catch(() => null);
-  const name = data?.profile?.full_name || 'Portfolio';
-  const tagline = data?.profile?.tagline;
+  const [data, settings] = await Promise.all([
+    getCachedPortfolio().catch(() => null),
+    getCachedPublicSettings().catch(() => null),
+  ]);
 
+  const name = data?.profile?.full_name || settings?.website_name || 'Portfolio';
+  const tagline = data?.profile?.tagline;
   const title = name;
   const description = tagline || 'Personal portfolio showcasing projects, experience, education, and certifications.';
+
+  // Dynamic favicon: use setting URL if configured, otherwise fall back to /favicon.ico
+  const faviconUrl = settings?.favicon_url || '/favicon.ico';
 
   return {
     metadataBase: new URL(defaultUrl),
@@ -23,11 +30,15 @@ export async function generateMetadata(): Promise<Metadata> {
       template: `%s | ${name}`,
     },
     description,
+    icons: {
+      icon: faviconUrl,
+      shortcut: faviconUrl,
+    },
     openGraph: {
       type: 'website',
       locale: 'en_US',
       url: defaultUrl,
-      siteName: name,
+      siteName: settings?.website_name || name,
       title,
       description,
     },

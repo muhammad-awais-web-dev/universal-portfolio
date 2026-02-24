@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { useAdminSession } from '@/lib/hooks/useAdminSession';
 import { useAdminProfile } from '@/lib/hooks/useAdminProfile';
+import { usePublicSettings } from '@/lib/hooks/usePublicSettings';
 import { AdminNavBar } from './admin-header-bar';
+import { LogoDisplay } from '@/components/portfolio/logo-display';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
@@ -18,16 +20,19 @@ const NAV_LINKS = [
 export function NavBarWrapper() {
   const { isLoggedIn, isChecking, logout } = useAdminSession();
   const { profile } = useAdminProfile(isLoggedIn);
+  const { settings } = usePublicSettings();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // While checking, show default navbar
+  const brandFallback = settings.website_name || profile?.full_name || 'Portfolio';
+
+  // While checking, show skeleton navbar with logo
   if (isChecking) {
     return (
       <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
         <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
-          <div className="flex gap-1 items-center">
-            <Link href={"/"} className="font-semibold mr-3">Portfolio</Link>
-          </div>
+          <Link href="/">
+            <LogoDisplay logo={settings.logo} fallbackText={brandFallback} />
+          </Link>
           <ThemeSwitcher />
         </div>
       </nav>
@@ -39,13 +44,15 @@ export function NavBarWrapper() {
     return <AdminNavBar profile={profile} onLogout={logout} />;
   }
 
-  // Default public navbar
+  // Public navbar
   return (
     <nav className="w-full flex justify-center border-b border-b-foreground/10">
       <div className="w-full max-w-5xl p-3 px-5 text-sm">
         <div className="flex justify-between items-center h-10">
           <div className="flex gap-1 items-center">
-            <Link href={"/"} className="font-semibold mr-3">Portfolio</Link>
+            <Link href="/" className="mr-3">
+              <LogoDisplay logo={settings.logo} fallbackText={brandFallback} />
+            </Link>
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -69,7 +76,7 @@ export function NavBarWrapper() {
           </div>
         </div>
 
-        {/* Mobile dropdown menu */}
+        {/* Mobile dropdown */}
         {mobileOpen && (
           <div className="sm:hidden py-2 border-t mt-2 flex flex-col gap-1">
             {NAV_LINKS.map((link) => (
