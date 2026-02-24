@@ -15,7 +15,7 @@ interface HomePageProps {
   isEmailConfigured?: boolean;
 }
 
-export default function HomePage({ isAdmin, forceDevMode, missingVars, isEmailConfigured = false }: HomePageProps) {
+export default function HomePage({ forceDevMode, missingVars, isEmailConfigured = false }: HomePageProps) {
   const [mounted, setMounted] = useState(false);
   const { isLoggedIn } = useAdminSession();
 
