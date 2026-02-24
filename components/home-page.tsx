@@ -12,18 +12,15 @@ interface HomePageProps {
   isAdmin: boolean;
   forceDevMode: boolean;
   missingVars: string[];
+  isEmailConfigured?: boolean;
 }
 
-export default function HomePage({ isAdmin, forceDevMode, missingVars }: HomePageProps) {
+export default function HomePage({ isAdmin, forceDevMode, missingVars, isEmailConfigured = false }: HomePageProps) {
   const [mounted, setMounted] = useState(false);
-  const [emailConfigured, setEmailConfigured] = useState(false);
   const { isLoggedIn } = useAdminSession();
 
   useEffect(() => {
     setMounted(true);
-    fetch('/api/test-email', { method: 'HEAD' })
-      .then(res => setEmailConfigured(res.ok))
-      .catch(() => setEmailConfigured(false));
   }, []);
 
   if (!mounted) return null;
@@ -89,6 +86,6 @@ export default function HomePage({ isAdmin, forceDevMode, missingVars }: HomePag
   }
 
   // ── Published mode ────────────────────────────────────────────────────────
-  return <PublishedPortfolio isAdmin={effectiveIsAdmin} isEmailConfigured={emailConfigured} />;
+  return <PublishedPortfolio isAdmin={effectiveIsAdmin} isEmailConfigured={isEmailConfigured} />;
 }
 
