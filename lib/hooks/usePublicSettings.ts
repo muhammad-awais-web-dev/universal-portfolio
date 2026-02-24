@@ -22,7 +22,6 @@ async function fetchPublicSettings(): Promise<PublicSettings> {
       fetchPromise = null;
       return {
         website_name: DEFAULT_SETTINGS.website_name,
-        favicon_url: DEFAULT_SETTINGS.favicon_url,
         logo: DEFAULT_SETTINGS.logo,
         mcp_enabled: DEFAULT_SETTINGS.mcp_enabled,
       } as PublicSettings;
@@ -40,7 +39,6 @@ export function invalidatePublicSettingsCache() {
 export function usePublicSettings() {
   const [settings, setSettings] = useState<PublicSettings>(() => ({
     website_name: DEFAULT_SETTINGS.website_name,
-    favicon_url: DEFAULT_SETTINGS.favicon_url,
     logo: DEFAULT_SETTINGS.logo,
     mcp_enabled: DEFAULT_SETTINGS.mcp_enabled,
   }) as PublicSettings);

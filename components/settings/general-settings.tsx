@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -256,32 +255,6 @@ export function GeneralSettings() {
                 onChange={(e) => setLogo({ text: e.target.value || null })}
                 placeholder={settings.website_name || 'My Portfolio'}
               />
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Favicon */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Favicon</CardTitle>
-          <CardDescription>
-            The icon shown in browser tabs. Recommended: 32×32 px square image.
-            Changes apply after saving and reloading the page.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <ImageUpload
-            value={settings.favicon_url || undefined}
-            onChange={(url) => set('favicon_url', url)}
-            onDelete={() => set('favicon_url', null)}
-            folder="settings"
-          />
-          {settings.favicon_url && (
-            <div className="flex items-center gap-3">
-              <Image src={settings.favicon_url} alt="Favicon preview" width={32} height={32}
-                className="h-8 w-8 object-contain border rounded" unoptimized />
-              <span className="text-xs text-muted-foreground">This will appear in browser tabs after saving</span>
             </div>
           )}
         </CardContent>

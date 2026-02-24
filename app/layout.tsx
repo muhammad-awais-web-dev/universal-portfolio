@@ -20,9 +20,6 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = name;
   const description = tagline || 'Personal portfolio showcasing projects, experience, education, and certifications.';
 
-  // Dynamic favicon: use setting URL if configured, otherwise fall back to /favicon.ico
-  const faviconUrl = settings?.favicon_url || '/favicon.ico';
-
   return {
     metadataBase: new URL(defaultUrl),
     title: {
@@ -31,8 +28,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description,
     icons: {
-      icon: faviconUrl,
-      shortcut: faviconUrl,
+      icon: '/favicon.ico',
+      shortcut: '/favicon.ico',
     },
     openGraph: {
       type: 'website',
