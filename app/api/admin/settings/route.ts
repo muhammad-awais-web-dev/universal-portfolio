@@ -3,7 +3,7 @@
 // PATCH /api/admin/settings — saves partial updates + clears site-settings cache
 
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidateTag } from 'next/cache';
+import { invalidateTag as revalidateTag } from '@/lib/cache/invalidate';
 import { requireAuth } from '@/lib/auth/api-guard';
 import { getAllSettings, saveSetting } from '@/lib/settings/repository';
 import { SETTINGS_CACHE_TAG } from '@/lib/settings/cached';
@@ -32,7 +32,7 @@ export async function PATCH(request: NextRequest) {
     await saveSetting(updates);
 
     // Always clear the Tier-2 cache so public pages get fresh cosmetic settings
-    revalidateTag(SETTINGS_CACHE_TAG, 'max');
+    revalidateTag(SETTINGS_CACHE_TAG);
 
     const settings = await getAllSettings();
     return NextResponse.json(settings);

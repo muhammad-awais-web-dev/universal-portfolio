@@ -53,8 +53,9 @@ export function GeneralSettings() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       });
-      if (!res.ok) throw new Error('Save failed');
-      setSettings(await res.json());
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.details || data?.error || 'Save failed');
+      setSettings(data);
       invalidatePublicSettingsCache();
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);

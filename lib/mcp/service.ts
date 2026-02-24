@@ -3,7 +3,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase-client';
 import { ProjectFilters, SkillFilters, PaginationParams } from './types';
-import { revalidateTag } from 'next/cache';
+import { invalidateTag as revalidateTag } from '@/lib/cache/invalidate';
 import { PORTFOLIO_CACHE_TAG } from '@/lib/cache/portfolio-cache';
 import {
   upsertProfile,
@@ -399,7 +399,7 @@ export async function getTestimonial(id: number) {
 // ============================================================================
 
 function invalidateCache() {
-  revalidateTag(PORTFOLIO_CACHE_TAG, 'max');
+  revalidateTag(PORTFOLIO_CACHE_TAG);
 }
 
 // Profile

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { revalidateTag } from 'next/cache';
+import { invalidateTag as revalidateTag } from '@/lib/cache/invalidate';
 import { PORTFOLIO_CACHE_TAG } from '@/lib/cache/portfolio-cache';
 import { requireAuth } from '@/lib/auth/api-guard';
 import { getExperience, updateExperience, deleteExperience } from '@/lib/data/portfolio-repository';
@@ -30,7 +30,7 @@ export async function PUT(request: Request, { params }: { params: Params }) {
     const payload = await request.json();
     const parsed = experienceUpdateSchema.parse({ ...payload, id: Number(experienceId) });
     const exp = await updateExperience(parsed);
-    revalidateTag(PORTFOLIO_CACHE_TAG, 'max');
+    revalidateTag(PORTFOLIO_CACHE_TAG);
     return NextResponse.json({ experience: exp });
   } catch (error) {
     const status = error instanceof Error && error.name === 'ZodError' ? 422 : 500;
@@ -48,7 +48,7 @@ export async function DELETE(_: Request, { params }: { params: Params }) {
   try {
     const { experienceId } = await params;
     await deleteExperience(Number(experienceId));
-    revalidateTag(PORTFOLIO_CACHE_TAG, 'max');
+    revalidateTag(PORTFOLIO_CACHE_TAG);
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
