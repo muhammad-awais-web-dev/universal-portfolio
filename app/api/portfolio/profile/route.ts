@@ -6,7 +6,7 @@ import { getProfile, upsertProfile } from '@/lib/data/portfolio-repository';
 import { profileSchema } from '@/lib/schemas/portfolio';
 import { withPortfolioGuard } from '@/lib/auth/portfolio-guard';
 
-async function handleGET(request: NextRequest) {
+async function handleGET(_request: NextRequest) {
   try {
     const profile = await getProfile();
     return NextResponse.json({ profile });

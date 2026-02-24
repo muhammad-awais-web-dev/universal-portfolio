@@ -184,7 +184,7 @@ export function CertificationForm() {
               <Label htmlFor="featured_image_cert">Certificate Image *</Label>
               <ImageUpload
                 value={formData.featured_image}
-                onChange={(url, publicId) => {
+                onChange={(url, _publicId) => {
                   setFormData({ ...formData, featured_image: url });
                 }}
                 onDelete={() => {

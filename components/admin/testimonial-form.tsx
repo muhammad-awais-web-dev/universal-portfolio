@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Pencil, Star } from "lucide-react";
+import { X, Pencil, Star } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -358,7 +358,7 @@ export function TestimonialForm() {
 
                         {/* Comment */}
                         <p className="text-sm italic border-l-2 border-primary pl-3 py-1">
-                          "{testimonial.comment}"
+                          &ldquo;{testimonial.comment}&rdquo;
                         </p>
 
                         {/* Date */}

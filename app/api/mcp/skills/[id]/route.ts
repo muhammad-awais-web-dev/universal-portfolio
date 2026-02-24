@@ -17,10 +17,11 @@ async function handleGET(
     
     const skill = await getSkill(idOrName);
     return Response.json(mcpResponse(skill));
-  } catch (error: any) {
-    const status = error.message.includes('not found') ? 404 : 500;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    const status = message.includes('not found') ? 404 : 500;
     return Response.json(
-      mcpResponse(null, false, error.message),
+      mcpResponse(null, false, message),
       { status }
     );
   }

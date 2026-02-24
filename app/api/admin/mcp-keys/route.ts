@@ -31,7 +31,7 @@ function unauthorizedResponse() {
 }
 
 // GET /api/admin/mcp-keys - List all API keys
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const isValid = await validateAdminSession();
   if (!isValid) {
     return unauthorizedResponse();
@@ -40,9 +40,9 @@ export async function GET(request: NextRequest) {
   try {
     const keys = await listMcpApiKeys();
     return NextResponse.json({ keys });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: error.message },
+      { error: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
@@ -74,9 +74,9 @@ export async function POST(request: NextRequest) {
       id: result.id,
       record: result.record,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: error.message },
+      { error: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
@@ -105,9 +105,9 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({
       message: `API key ${enabled ? 'enabled' : 'disabled'} successfully`,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: error.message },
+      { error: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
@@ -135,9 +135,9 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({
       message: 'API key deleted successfully',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: error.message },
+      { error: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

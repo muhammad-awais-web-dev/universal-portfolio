@@ -22,10 +22,11 @@ async function handleGET(
     
     const experience = await getExperience(id);
     return Response.json(mcpResponse(experience));
-  } catch (error: any) {
-    const status = error.message.includes('not found') ? 404 : 500;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    const status = message.includes('not found') ? 404 : 500;
     return Response.json(
-      mcpResponse(null, false, error.message),
+      mcpResponse(null, false, message),
       { status }
     );
   }

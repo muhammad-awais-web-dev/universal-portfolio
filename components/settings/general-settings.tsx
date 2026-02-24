@@ -204,7 +204,7 @@ export function GeneralSettings() {
             <div className="space-y-1 flex-1">
               <Label>Portfolio Data Cache</Label>
               <p className="text-sm text-muted-foreground">
-                Portfolio data is cached for 3 days to improve performance. Clear the cache if you've made changes and want to see them immediately.
+                Portfolio data is cached for 3 days to improve performance. Clear the cache if you&apos;ve made changes and want to see them immediately.
               </p>
             </div>
             <Button

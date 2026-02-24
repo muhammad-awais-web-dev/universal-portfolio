@@ -6,7 +6,7 @@ import { NavBarWrapper } from '@/components/admin/navbar-wrapper';
 import { SkillBadge } from '@/components/portfolio/skill-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Briefcase, Calendar, MapPin } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin } from 'lucide-react';
 import { getDateRange } from '@/lib/utils/portfolio-helpers';
 import { Experience, Skill } from '@/lib/models/portfolio';
 
@@ -50,7 +50,7 @@ export function ExperienceDetailClient({ id }: ExperienceDetailClientProps) {
       <NavBarWrapper />
       <div className="max-w-5xl mx-auto px-4 py-12 text-center space-y-4">
         <h1 className="text-3xl font-bold">Experience Not Found</h1>
-        <p className="text-muted-foreground">This experience entry doesn't exist or has been removed.</p>
+        <p className="text-muted-foreground">This experience entry doesn&apos;t exist or has been removed.</p>
         <Button asChild><Link href="/experience"><ArrowLeft className="mr-2 h-4 w-4" />Back to Experience</Link></Button>
       </div>
     </main>

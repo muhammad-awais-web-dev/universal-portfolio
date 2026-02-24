@@ -24,7 +24,7 @@ function isSameOrigin(request: NextRequest): boolean {
       if (originUrl.host === host) {
         return true;
       }
-    } catch (e) {
+    } catch {
       // Invalid origin URL
     }
   }
@@ -36,7 +36,7 @@ function isSameOrigin(request: NextRequest): boolean {
       if (refererUrl.host === host) {
         return true;
       }
-    } catch (e) {
+    } catch {
       // Invalid referer URL
     }
   }
@@ -104,7 +104,7 @@ export function portfolioUnauthorizedResponse() {
 /**
  * Middleware wrapper for portfolio routes
  */
-export function withPortfolioGuard<T = any>(
+export function withPortfolioGuard<T = unknown>(
   handler: (request: NextRequest, context: T) => Promise<Response>
 ) {
   return async (request: NextRequest, context: T) => {

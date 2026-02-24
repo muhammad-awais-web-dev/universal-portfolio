@@ -228,7 +228,7 @@ export function ProjectForm() {
               <Label htmlFor="featured_image">Featured Image *</Label>
               <ImageUpload
                 value={formData.featured_image}
-                onChange={(url, publicId) => {
+                onChange={(url, _publicId) => {
                   setFormData({ ...formData, featured_image: url });
                 }}
                 onDelete={() => {

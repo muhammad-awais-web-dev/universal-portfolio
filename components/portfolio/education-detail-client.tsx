@@ -6,8 +6,8 @@ import { NavBarWrapper } from '@/components/admin/navbar-wrapper';
 import { SkillBadge } from '@/components/portfolio/skill-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, GraduationCap, Calendar } from 'lucide-react';
-import { formatDate, getDateRange } from '@/lib/utils/portfolio-helpers';
+import { ArrowLeft, Calendar } from 'lucide-react';
+import { getDateRange } from '@/lib/utils/portfolio-helpers';
 import { Education, Skill } from '@/lib/models/portfolio';
 
 interface EducationDetailClientProps {
@@ -50,7 +50,7 @@ export function EducationDetailClient({ id }: EducationDetailClientProps) {
       <NavBarWrapper />
       <div className="max-w-5xl mx-auto px-4 py-12 text-center space-y-4">
         <h1 className="text-3xl font-bold">Education Not Found</h1>
-        <p className="text-muted-foreground">This education entry doesn't exist or has been removed.</p>
+        <p className="text-muted-foreground">This education entry doesn&apos;t exist or has been removed.</p>
         <Button asChild><Link href="/education"><ArrowLeft className="mr-2 h-4 w-4" />Back to Education</Link></Button>
       </div>
     </main>
