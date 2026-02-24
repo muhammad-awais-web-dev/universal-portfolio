@@ -9,6 +9,7 @@ import {
   listMcpApiKeys,
   toggleMcpApiKey,
   deleteMcpApiKey,
+  setMcpApiKeyPermission,
 } from '@/lib/data/portfolio-repository';
 
 // Validate admin session from cookies
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name } = body;
+    const { name, can_write } = body;
 
     if (!name || typeof name !== 'string' || name.trim().length < 3) {
       return NextResponse.json(
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await createMcpApiKey(name.trim());
+    const result = await createMcpApiKey(name.trim(), can_write === true);
     
     return NextResponse.json({
       message: 'API key created successfully',
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PATCH /api/admin/mcp-keys - Toggle key enabled status
+// PATCH /api/admin/mcp-keys - Toggle key enabled or can_write status
 export async function PATCH(request: NextRequest) {
   const isValid = await validateAdminSession();
   if (!isValid) {
@@ -91,20 +92,21 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { id, enabled } = body;
+    const { id, enabled, can_write } = body;
 
-    if (!id || typeof enabled !== 'boolean') {
-      return NextResponse.json(
-        { error: 'ID and enabled status are required' },
-        { status: 400 }
-      );
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    await toggleMcpApiKey(id, enabled);
-    
-    return NextResponse.json({
-      message: `API key ${enabled ? 'enabled' : 'disabled'} successfully`,
-    });
+    if (typeof enabled === 'boolean') {
+      await toggleMcpApiKey(id, enabled);
+    }
+
+    if (typeof can_write === 'boolean') {
+      await setMcpApiKeyPermission(id, can_write);
+    }
+
+    return NextResponse.json({ message: 'API key updated successfully' });
   } catch (error: unknown) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : String(error) },

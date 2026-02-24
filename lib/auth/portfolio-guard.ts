@@ -62,7 +62,8 @@ async function hasValidApiKey(request: NextRequest): Promise<boolean> {
   
   // Check database keys
   try {
-    return await validateMcpApiKey(apiKey);
+    const { valid } = await validateMcpApiKey(apiKey);
+    return valid;
   } catch (error) {
     console.error('Error validating API key:', error);
     return false;
