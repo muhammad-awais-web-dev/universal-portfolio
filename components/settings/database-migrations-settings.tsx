@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle2, Clock, Copy, Check, Play, AlertTriangle, RefreshCw } from 'lucide-react';
+import { CheckCircle2, Clock, Copy, Check, Play, AlertTriangle, RefreshCw, ExternalLink } from 'lucide-react';
 
 interface MigrationStatus {
   name: string;
@@ -17,6 +17,7 @@ interface StatusResponse {
   bootstrapReady: boolean;
   migrations: MigrationStatus[];
   bootstrapSQL: string;
+  supabaseSqlEditorUrl: string;
 }
 
 interface RunResult {
@@ -86,50 +87,67 @@ export function DatabaseMigrationsSettings() {
       <div>
         <h2 className="text-xl font-semibold">Database Migrations</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Apply database schema updates directly from this page.
+          Schema changes are tracked as numbered migration files in{' '}
+          <code className="text-xs bg-muted px-1 py-0.5 rounded">lib/db/migrations/</code>.
+          Each file contains SQL that adds or modifies tables and columns. Migrations are applied
+          in order and recorded in a <code className="text-xs bg-muted px-1 py-0.5 rounded">schema_migrations</code>{' '}
+          tracking table so they are never run twice.
         </p>
       </div>
 
       {/* Bootstrap notice */}
-      {status && !status.bootstrapReady && (
+      {!loading && status && !status.bootstrapReady && (
         <Card className="border-amber-500/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-amber-600">
               <AlertTriangle className="h-5 w-5" />
               One-Time Setup Required
             </CardTitle>
-            <CardDescription>
-              Run this SQL once in your{' '}
-              <a
-                href="https://supabase.com/dashboard"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
-                Supabase SQL Editor
-              </a>{' '}
-              to enable in-app migrations. After this, all future migrations run automatically here.
+            <CardDescription className="space-y-2 text-sm">
+              <p>
+                Supabase does not allow running DDL statements (like{' '}
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">ALTER TABLE</code>,{' '}
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">CREATE TABLE</code>) from
+                a regular API call. To work around this, we use a small PostgreSQL helper function
+                called <code className="text-xs bg-muted px-1 py-0.5 rounded">exec_sql</code> that
+                runs arbitrary SQL with elevated privileges.
+              </p>
+              <p>
+                The SQL below creates that helper function <strong>and</strong> the{' '}
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">schema_migrations</code>{' '}
+                tracking table. You only need to run it <strong>once</strong>. After that, all
+                future schema changes can be applied from this page without touching Supabase.
+              </p>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <pre className="bg-muted rounded-md p-4 text-xs overflow-x-auto whitespace-pre-wrap font-mono">
+            <pre className="bg-muted rounded-md p-4 text-xs overflow-x-auto whitespace-pre-wrap font-mono leading-relaxed">
               {status.bootstrapSQL}
             </pre>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" onClick={copyBootstrap}>
                 {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
                 {copied ? 'Copied!' : 'Copy SQL'}
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <a href={status.supabaseSqlEditorUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Open SQL Editor
+                </a>
               </Button>
               <Button variant="outline" size="sm" onClick={fetchStatus}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Check Again
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Paste the SQL above into the editor, run it, then click <strong>Check Again</strong>.
+            </p>
           </CardContent>
         </Card>
       )}
 
-      {/* Migration status */}
+      {/* Migration status list */}
       {status?.bootstrapReady && (
         <Card>
           <CardHeader>
@@ -151,6 +169,7 @@ export function DatabaseMigrationsSettings() {
                 <CardDescription>
                   {status.migrations.length} total migrations •{' '}
                   {status.migrations.filter((m) => m.applied).length} applied
+                  {pendingCount > 0 && ` • ${pendingCount} pending`}
                 </CardDescription>
               </div>
               <Button
