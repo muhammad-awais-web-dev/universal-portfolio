@@ -65,7 +65,7 @@ export async function GET() {
       priority: '0.5',
     }));
 
-    const expUrls = (data.experience || []).map((e) => ({
+    const expUrls = (data.experiences || []).map((e) => ({
       loc: `${baseUrl}/experience/${e.id}`,
       lastmod: (e.created_at || today).split('T')[0],
       changefreq: 'yearly',
