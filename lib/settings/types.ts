@@ -29,8 +29,6 @@ export interface SiteSettings {
   // ── Tier 2: short-cached (5 min) — public cosmetics ──────────────────────
   /** Portfolio brand/site name shown in navbar and <title> */
   website_name: string;
-  /** URL of custom favicon image */
-  favicon_url: string | null;
   /** Logo image + display options */
   logo: LogoSettings;
   /** Whether the MCP API is accessible */
@@ -50,7 +48,6 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   maintenance_mode: false,
   contact_form_enabled: true,
   website_name: 'My Portfolio',
-  favicon_url: null,
   logo: DEFAULT_LOGO,
   mcp_enabled: true,
 };
@@ -65,7 +62,6 @@ export const LIVE_SETTING_KEYS: (keyof SiteSettings)[] = [
 /** Keys that are safe to short-cache for public consumption (Tier 2) */
 export const CACHED_SETTING_KEYS: (keyof SiteSettings)[] = [
   'website_name',
-  'favicon_url',
   'logo',
   'mcp_enabled',
 ];
