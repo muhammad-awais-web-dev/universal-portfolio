@@ -3,7 +3,6 @@ import { supabaseAdmin } from '../supabase-client';
 import type {
   Profile,
   Project,
-  ProjectImage,
   Skill,
   SkillCategory,
   ProjectCategory,
@@ -11,6 +10,7 @@ import type {
   Education,
   Experience,
   Testimonial,
+  McpApiKeyListItem,
 } from '../models/portfolio';
 import {
   ProfileInput,
@@ -399,7 +399,7 @@ export async function getCertification(id: number): Promise<Certification | null
 export async function createCertification(input: CertificationCreateInput): Promise<Certification> {
   const client = getClient();
   const payload = certificationCreateSchema.parse(input);
-  const { skill_ids, project_ids, images, ...values } = payload;
+  const { skill_ids, project_ids, images: _images, ...values } = payload;
   const { data, error } = await client.from('certifications').insert(values).select('*').single();
   if (error) throw new Error(`Failed to create certification: ${error.message}`);
   await syncJunction('certification_skills', 'certification_id', data.id, 'skill_id', skill_ids);
@@ -410,7 +410,7 @@ export async function createCertification(input: CertificationCreateInput): Prom
 export async function updateCertification(input: CertificationUpdateInput): Promise<Certification> {
   const client = getClient();
   const payload = certificationUpdateSchema.parse(input);
-  const { id, skill_ids, project_ids, images, ...values } = payload;
+  const { id, skill_ids, project_ids, images: _images, ...values } = payload;
   const { data, error } = await client
     .from('certifications')
     .update(values)
@@ -674,7 +674,7 @@ export async function getFullPortfolio() {
  */
 export async function createMcpApiKey(
   name: string
-): Promise<{ key: string; id: string; record: any }> {
+): Promise<{ key: string; id: string; record: McpApiKeyListItem }> {
   const client = getClient();
   const crypto = await import('crypto');
   const bcrypt = await import('bcryptjs');
@@ -787,7 +787,7 @@ export async function validateMcpApiKey(plainKey: string): Promise<boolean> {
 
         return true;
       }
-    } catch (err) {
+    } catch {
       // Continue checking other keys if comparison fails
       continue;
     }

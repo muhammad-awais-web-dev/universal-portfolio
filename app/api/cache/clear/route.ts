@@ -10,7 +10,7 @@ import { verifySession } from '@/lib/auth/session';
  * 
  * Access: Admin only
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // Check if user is authenticated
     const token = await getSessionCookie();

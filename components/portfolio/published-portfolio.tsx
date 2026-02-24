@@ -240,7 +240,7 @@ export function PublishedPortfolio({ isAdmin, isEmailConfigured = false }: Publi
         {!isEmailConfigured && data.profile?.email && (
           <section className="border-t bg-muted/20">
             <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-              <h2 className="text-3xl font-bold mb-4">Let's Work Together</h2>
+              <h2 className="text-3xl font-bold mb-4">Let&apos;s Work Together</h2>
               <p className="text-lg text-muted-foreground mb-6">Interested in collaboration or have a project in mind?</p>
               <Button asChild size="lg">
                 <a href={`mailto:${data.profile.email}`}>Get in Touch</a>

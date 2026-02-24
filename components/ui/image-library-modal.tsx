@@ -39,6 +39,7 @@ export function ImageLibraryModal({ isOpen, onClose, onSelect, folder = 'portfol
       loadImages();
       setSelectedForDelete(new Set());
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, folder]);
 
   useEffect(() => {

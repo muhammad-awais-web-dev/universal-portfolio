@@ -35,8 +35,8 @@ export function ApiKeysSettings() {
       
       const data = await response.json();
       setKeys(data.keys);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -73,8 +73,8 @@ export function ApiKeysSettings() {
       setGeneratedKey(data.key);
       setNewKeyName('');
       await fetchKeys();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setCreating(false);
     }
@@ -93,8 +93,8 @@ export function ApiKeysSettings() {
       if (!response.ok) throw new Error('Failed to toggle key');
       
       await fetchKeys();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -111,8 +111,8 @@ export function ApiKeysSettings() {
       if (!response.ok) throw new Error('Failed to delete key');
       
       await fetchKeys();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     }
   };
 

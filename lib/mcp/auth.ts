@@ -4,18 +4,6 @@ import { timingSafeEqual } from 'crypto';
 import { validateMcpApiKey } from '@/lib/data/portfolio-repository';
 
 /**
- * Check if MCP is enabled
- * This reads from localStorage on server via cookies or headers
- */
-async function isMcpEnabled(): Promise<boolean> {
-  // For now, we'll check if there are any MCP keys in the database
-  // If MCP is explicitly disabled, keys won't validate anyway
-  // This allows MCP to work if keys exist, regardless of setting
-  // TODO: Store settings in database instead of localStorage
-  return true;
-}
-
-/**
  * Validates API key from request headers
  * Checks both database keys and environment variable (fallback)
  * Uses constant-time comparison to prevent timing attacks
@@ -80,7 +68,7 @@ export function unauthorizedResponse() {
  * Middleware wrapper for API routes requiring authentication
  * Supports both simple routes and dynamic routes with params
  */
-export function withAuth<T = any>(
+export function withAuth<T = unknown>(
   handler: (request: NextRequest, context: T) => Promise<Response>
 ) {
   return async (request: NextRequest, context: T) => {

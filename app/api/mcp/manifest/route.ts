@@ -81,9 +81,9 @@ async function handleGET(request: NextRequest) {
     };
 
     return Response.json(mcpResponse(manifest));
-  } catch (error: any) {
+  } catch (error: unknown) {
     return Response.json(
-      mcpResponse(null, false, error.message),
+      mcpResponse(null, false, error instanceof Error ? error.message : String(error)),
       { status: 500 }
     );
   }

@@ -1,7 +1,7 @@
 // MCP Server Types
 // Shared types for Model Context Protocol implementation
 
-export interface MCPResponse<T = any> {
+export interface MCPResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
@@ -13,7 +13,7 @@ export interface MCPTool {
   description: string;
   inputSchema: {
     type: 'object';
-    properties: Record<string, any>;
+    properties: Record<string, unknown>;
     required?: string[];
   };
 }
@@ -38,13 +38,13 @@ export interface MCPManifest {
     requestFormat: {
       description: string;
       schema: Record<string, string>;
-      example: any;
+      example: unknown;
     };
     responseFormat: {
       description: string;
       schema: Record<string, string>;
-      successExample: any;
-      errorExample: any;
+      successExample: unknown;
+      errorExample: unknown;
     };
     bestPractices: string[];
     errorHandling: Record<string, string>;

@@ -36,7 +36,7 @@ export async function requireAuth(): Promise<NextResponse | null> {
     }
     
     return null; // Authentication successful
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Unauthorized', message: 'Authentication failed' },
       { status: 401 }

@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Folder, 
   Image as ImageIcon, 
   Download, 
   Trash2, 
@@ -26,9 +25,6 @@ interface CloudinaryImage {
   created_at: string;
 }
 
-interface FolderStructure {
-  [key: string]: CloudinaryImage[];
-}
 
 const FOLDERS = [
   { name: 'bio', label: 'Bio / Profile', icon: '👤' },

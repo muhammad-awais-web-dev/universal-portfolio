@@ -36,7 +36,7 @@ export function PassphraseForm() {
       } else {
         setError(data.message || "Invalid passphrase");
       }
-    } catch (err) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);

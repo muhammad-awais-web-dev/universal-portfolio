@@ -275,7 +275,7 @@ export function SkillForm() {
               <Label htmlFor="logo_url">Skill Logo (optional)</Label>
               <ImageUpload
                 value={formData.logo_url}
-                onChange={(url, publicId) => {
+                onChange={(url, _publicId) => {
                   setFormData({ ...formData, logo_url: url });
                 }}
                 onDelete={() => {

@@ -103,7 +103,7 @@ export function BioForm() {
                 <Label htmlFor="avatar">Avatar Image</Label>
                 <ImageUpload
                   value={formData.avatar_url}
-                  onChange={(url, publicId) => {
+                  onChange={(url, _publicId) => {
                     setFormData({ ...formData, avatar_url: url });
                   }}
                   onDelete={() => {

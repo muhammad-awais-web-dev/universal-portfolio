@@ -8,7 +8,7 @@ import { SkillBadge } from '@/components/portfolio/skill-badge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Award, ExternalLink, Calendar } from 'lucide-react';
-import { formatDate, getDateRange } from '@/lib/utils/portfolio-helpers';
+import { formatDate } from '@/lib/utils/portfolio-helpers';
 import { Certification, Skill } from '@/lib/models/portfolio';
 
 interface CertificationDetailClientProps {
@@ -51,7 +51,7 @@ export function CertificationDetailClient({ id }: CertificationDetailClientProps
       <NavBarWrapper />
       <div className="max-w-5xl mx-auto px-4 py-12 text-center space-y-4">
         <h1 className="text-3xl font-bold">Certification Not Found</h1>
-        <p className="text-muted-foreground">This certification doesn't exist or has been removed.</p>
+        <p className="text-muted-foreground">This certification doesn&apos;t exist or has been removed.</p>
         <Button asChild><Link href="/certifications"><ArrowLeft className="mr-2 h-4 w-4" />Back to Certifications</Link></Button>
       </div>
     </main>

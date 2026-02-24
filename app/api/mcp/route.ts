@@ -23,7 +23,7 @@ import {
 
 interface ToolCallRequest {
   tool: string;
-  parameters?: Record<string, any>;
+  parameters?: Record<string, unknown>;
 }
 
 // Define available tools with their metadata
@@ -142,7 +142,7 @@ const AVAILABLE_TOOLS = [
   }
 ];
 
-async function handleGET(request: NextRequest) {
+async function handleGET(_request: NextRequest) {
   return Response.json(
     mcpResponse({
       name: 'Universal Portfolio MCP Router',
@@ -189,7 +189,7 @@ async function handlePOST(request: NextRequest) {
         if (!parameters.id) {
           throw new Error('Project ID is required');
         }
-        result = await getProject(parameters.id);
+        result = await getProject(Number(parameters.id));
         break;
 
       case 'list_skills':
@@ -200,7 +200,7 @@ async function handlePOST(request: NextRequest) {
         if (!parameters.id) {
           throw new Error('Skill ID is required');
         }
-        result = await getSkill(parameters.id);
+        result = await getSkill(Number(parameters.id));
         break;
 
       case 'list_certifications':
@@ -211,7 +211,7 @@ async function handlePOST(request: NextRequest) {
         if (!parameters.id) {
           throw new Error('Certification ID is required');
         }
-        result = await getCertification(parameters.id);
+        result = await getCertification(Number(parameters.id));
         break;
 
       case 'list_education':
@@ -222,7 +222,7 @@ async function handlePOST(request: NextRequest) {
         if (!parameters.id) {
           throw new Error('Education ID is required');
         }
-        result = await getEducation(parameters.id);
+        result = await getEducation(Number(parameters.id));
         break;
 
       case 'list_experience':
@@ -233,7 +233,7 @@ async function handlePOST(request: NextRequest) {
         if (!parameters.id) {
           throw new Error('Experience ID is required');
         }
-        result = await getExperience(parameters.id);
+        result = await getExperience(Number(parameters.id));
         break;
 
       case 'list_testimonials':
@@ -244,7 +244,7 @@ async function handlePOST(request: NextRequest) {
         if (!parameters.id) {
           throw new Error('Testimonial ID is required');
         }
-        result = await getTestimonial(parameters.id);
+        result = await getTestimonial(Number(parameters.id));
         break;
 
       default:
@@ -255,10 +255,11 @@ async function handlePOST(request: NextRequest) {
     }
 
     return Response.json(mcpResponse(result));
-  } catch (error: any) {
-    const status = error.message.includes('not found') ? 404 : 500;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    const status = message.includes('not found') ? 404 : 500;
     return Response.json(
-      mcpResponse(null, false, error.message),
+      mcpResponse(null, false, message),
       { status }
     );
   }

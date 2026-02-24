@@ -10,7 +10,7 @@ import { isEmailConfigured, getResendApiKey, getContactEmail } from '@/lib/utils
  * 
  * Access: Admin only (requires valid session)
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   // Require admin authentication
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get('portfolio_session')?.value;
