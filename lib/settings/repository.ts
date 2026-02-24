@@ -49,15 +49,32 @@ export async function saveSetting(
   updates: Partial<SiteSettings>
 ): Promise<void> {
   const client = getClient();
-  const rows = Object.entries(updates).map(([key, value]) => ({
-    key,
-    value,
-    updated_at: new Date().toISOString(),
-  }));
 
-  const { error } = await client
-    .from('site_settings')
-    .upsert(rows, { onConflict: 'key' });
+  // Supabase JS client maps JS null → SQL NULL, which violates the NOT NULL constraint on `value`.
+  // Fix: upsert non-null values, delete rows for null values (they fall back to DEFAULT_SETTINGS on read).
+  const rows: { key: string; value: unknown; updated_at: string }[] = [];
+  const nullKeys: string[] = [];
 
-  if (error) throw new Error(`Failed to save settings: ${error.message}`);
+  for (const [key, value] of Object.entries(updates)) {
+    if (value === null || value === undefined) {
+      nullKeys.push(key);
+    } else {
+      rows.push({ key, value, updated_at: new Date().toISOString() });
+    }
+  }
+
+  if (rows.length > 0) {
+    const { error } = await client
+      .from('site_settings')
+      .upsert(rows, { onConflict: 'key' });
+    if (error) throw new Error(`Failed to save settings: ${error.message}`);
+  }
+
+  if (nullKeys.length > 0) {
+    const { error } = await client
+      .from('site_settings')
+      .delete()
+      .in('key', nullKeys);
+    if (error) throw new Error(`Failed to clear settings: ${error.message}`);
+  }
 }
