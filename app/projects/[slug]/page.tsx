@@ -35,5 +35,32 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  return <ProjectDetailClient slug={slug} />;
+  const data = await getCachedPortfolio();
+  const project = data?.projects?.find((p) => p.slug === slug);
+
+  const jsonLd = project
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: project.title,
+        description: project.short_description || project.description || '',
+        url: project.live_url || '',
+        codeRepository: project.repo_url || '',
+        image: project.featured_image || '',
+        datePublished: project.published_at || project.created_at || '',
+        dateModified: project.updated_at || '',
+      }
+    : null;
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <ProjectDetailClient slug={slug} />
+    </>
+  );
 }
