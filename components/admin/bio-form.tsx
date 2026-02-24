@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { usePortfolio } from "./portfolio-context";
 import { ProfileFormData } from "@/lib/models/portfolio";
 import { Button } from "@/components/ui/button";
@@ -257,10 +258,13 @@ export function BioForm() {
             <div className="space-y-4">
               {profile.avatar_url && (
                 <div className="flex justify-center">
-                  <img
+                  <Image
                     src={profile.avatar_url}
                     alt={profile.full_name || "Avatar"}
+                    width={128}
+                    height={128}
                     className="w-32 h-32 rounded-full object-cover border-4"
+                    unoptimized
                   />
                 </div>
               )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import Image from 'next/image';
 import { Button } from './button';
 import { ImageUrlModal } from './image-url-modal';
 import { ImageLibraryModal } from './image-library-modal';
@@ -166,10 +167,12 @@ export function MultipleImageUpload({
               </div>
 
               {/* Image */}
-              <img
+              <Image
                 src={imageUrl}
                 alt={`Gallery image ${index + 1}`}
+                fill
                 className="w-full h-full object-cover"
+                unoptimized
               />
 
               {/* Remove Button */}

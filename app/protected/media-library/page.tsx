@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -210,10 +211,12 @@ export default function MediaLibraryPage() {
                 <Card key={image.public_id} className="overflow-hidden">
                   {/* Image Preview */}
                   <div className="aspect-square bg-muted relative group">
-                    <img
+                    <Image
                       src={image.secure_url}
                       alt={image.public_id}
+                      fill
                       className="w-full h-full object-cover"
+                      unoptimized
                     />
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                       <Button
