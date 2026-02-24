@@ -14,6 +14,7 @@ interface ApiKey {
   id: string;
   name: string;
   enabled: boolean;
+  can_write: boolean;
   created_at: string;
   last_used_at?: string;
 }
@@ -23,6 +24,7 @@ export function ApiKeysSettings() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [newKeyName, setNewKeyName] = useState('');
+  const [newKeyCanWrite, setNewKeyCanWrite] = useState(false);
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +63,7 @@ export function ApiKeysSettings() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: newKeyName }),
+        body: JSON.stringify({ name: newKeyName, can_write: newKeyCanWrite }),
       });
 
       if (!response.ok) {
@@ -72,11 +74,26 @@ export function ApiKeysSettings() {
       const data = await response.json();
       setGeneratedKey(data.key);
       setNewKeyName('');
+      setNewKeyCanWrite(false);
       await fetchKeys();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleToggleWrite = async (id: string, canWrite: boolean) => {
+    try {
+      const response = await fetch('/api/admin/mcp-keys', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, can_write: canWrite }),
+      });
+      if (!response.ok) throw new Error('Failed to update write permission');
+      await fetchKeys();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -197,6 +214,16 @@ export function ApiKeysSettings() {
               onKeyDown={(e) => e.key === 'Enter' && handleCreateKey()}
             />
           </div>
+          <div className="flex items-center justify-between py-2 px-3 border rounded-lg">
+            <div>
+              <p className="text-sm font-medium">Write Access</p>
+              <p className="text-xs text-muted-foreground">Allow this key to create, update, and delete portfolio data</p>
+            </div>
+            <Switch
+              checked={newKeyCanWrite}
+              onCheckedChange={setNewKeyCanWrite}
+            />
+          </div>
           <Button
             onClick={handleCreateKey}
             disabled={creating || newKeyName.length < 3}
@@ -227,14 +254,19 @@ export function ApiKeysSettings() {
               {keys.map((key) => (
                 <div
                   key={key.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
+                  className="flex items-start justify-between p-4 border rounded-lg gap-4"
                 >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-medium">{key.name}</h3>
                       <Badge variant={key.enabled ? 'default' : 'secondary'}>
                         {key.enabled ? 'Enabled' : 'Disabled'}
                       </Badge>
+                      {key.can_write && (
+                        <Badge variant="outline" className="text-amber-600 border-amber-500 text-xs">
+                          Write
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
                       Created: {new Date(key.created_at).toLocaleDateString()}
@@ -243,11 +275,21 @@ export function ApiKeysSettings() {
                       )}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={key.enabled}
-                      onCheckedChange={(checked) => handleToggle(key.id, checked)}
-                    />
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-xs text-muted-foreground">Active</span>
+                      <Switch
+                        checked={key.enabled}
+                        onCheckedChange={(checked) => handleToggle(key.id, checked)}
+                      />
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-xs text-muted-foreground">Write</span>
+                      <Switch
+                        checked={key.can_write}
+                        onCheckedChange={(checked) => handleToggleWrite(key.id, checked)}
+                      />
+                    </div>
                     <Button
                       variant="ghost"
                       size="icon"

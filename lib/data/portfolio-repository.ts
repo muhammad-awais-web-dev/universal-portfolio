@@ -673,7 +673,8 @@ export async function getFullPortfolio() {
  * Returns both the plain key (show only once) and the stored record
  */
 export async function createMcpApiKey(
-  name: string
+  name: string,
+  canWrite = false
 ): Promise<{ key: string; id: string; record: McpApiKeyListItem }> {
   const client = getClient();
   const crypto = await import('crypto');
@@ -691,8 +692,9 @@ export async function createMcpApiKey(
       name,
       key_hash: keyHash,
       enabled: true,
+      can_write: canWrite,
     })
-    .select('id, name, enabled, created_at, updated_at, last_used_at')
+    .select('id, name, enabled, can_write, created_at, updated_at, last_used_at')
     .single();
 
   if (error) {
@@ -714,7 +716,7 @@ export async function listMcpApiKeys() {
 
   const { data, error } = await client
     .from('mcp_api_keys')
-    .select('id, name, enabled, created_at, updated_at, last_used_at')
+    .select('id, name, enabled, can_write, created_at, updated_at, last_used_at')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -758,20 +760,20 @@ export async function deleteMcpApiKey(id: string): Promise<void> {
 
 /**
  * Validate an API key and update last_used_at
- * Returns true if valid and enabled
+ * Returns { valid: boolean; canWrite: boolean }
  */
-export async function validateMcpApiKey(plainKey: string): Promise<boolean> {
+export async function validateMcpApiKey(plainKey: string): Promise<{ valid: boolean; canWrite: boolean }> {
   const client = getClient();
   const bcrypt = await import('bcryptjs');
 
   // Get all enabled keys
   const { data: keys, error } = await client
     .from('mcp_api_keys')
-    .select('id, key_hash')
+    .select('id, key_hash, can_write')
     .eq('enabled', true);
 
   if (error || !keys || keys.length === 0) {
-    return false;
+    return { valid: false, canWrite: false };
   }
 
   // Check each key hash
@@ -785,7 +787,7 @@ export async function validateMcpApiKey(plainKey: string): Promise<boolean> {
           .update({ last_used_at: new Date().toISOString() })
           .eq('id', keyRecord.id);
 
-        return true;
+        return { valid: true, canWrite: keyRecord.can_write === true };
       }
     } catch {
       // Continue checking other keys if comparison fails
@@ -793,5 +795,21 @@ export async function validateMcpApiKey(plainKey: string): Promise<boolean> {
     }
   }
 
-  return false;
+  return { valid: false, canWrite: false };
+}
+
+/**
+ * Update an API key's write permission
+ */
+export async function setMcpApiKeyPermission(id: string, canWrite: boolean): Promise<void> {
+  const client = getClient();
+
+  const { error } = await client
+    .from('mcp_api_keys')
+    .update({ can_write: canWrite })
+    .eq('id', id);
+
+  if (error) {
+    throw new Error(`Failed to update API key permission: ${error.message}`);
+  }
 }
