@@ -103,7 +103,7 @@ export async function listSkills(filters: SkillFilters = {}) {
   const limit = Math.min(filters.limit || 20, 100);
   const offset = (page - 1) * limit;
 
-  let query = supabaseAdmin
+  const query = supabaseAdmin
     .from('skills')
     .select(`
       *,
