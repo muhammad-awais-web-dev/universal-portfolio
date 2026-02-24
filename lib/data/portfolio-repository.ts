@@ -686,16 +686,26 @@ export async function createMcpApiKey(
   // Hash the key for storage (bcrypt with 10 salt rounds)
   const keyHash = await bcrypt.hash(plainKey, 10);
 
-  const { data, error } = await client
+  // Try inserting with can_write; fall back without it if column doesn't exist yet
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let data: any, error: any;
+  ({ data, error } = await client
     .from('mcp_api_keys')
-    .insert({
-      name,
-      key_hash: keyHash,
-      enabled: true,
-      can_write: canWrite,
-    })
+    .insert({ name, key_hash: keyHash, enabled: true, can_write: canWrite })
     .select('id, name, enabled, can_write, created_at, updated_at, last_used_at')
-    .single();
+    .single());
+
+  // If can_write column doesn't exist yet (migration pending), retry without it
+  if (error && error.message.includes('can_write')) {
+    ({ data, error } = await client
+      .from('mcp_api_keys')
+      .insert({ name, key_hash: keyHash, enabled: true })
+      .select('id, name, enabled, created_at, updated_at, last_used_at')
+      .single());
+    if (!error && data) {
+      data = { ...data, can_write: false };
+    }
+  }
 
   if (error) {
     throw new Error(`Failed to create API key: ${error.message}`);
@@ -714,16 +724,28 @@ export async function createMcpApiKey(
 export async function listMcpApiKeys() {
   const client = getClient();
 
-  const { data, error } = await client
+  // Try with can_write first; fall back if column doesn't exist yet
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let result: any = await client
     .from('mcp_api_keys')
     .select('id, name, enabled, can_write, created_at, updated_at, last_used_at')
     .order('created_at', { ascending: false });
 
-  if (error) {
-    throw new Error(`Failed to list API keys: ${error.message}`);
+  if (result.error && result.error.message.includes('can_write')) {
+    result = await client
+      .from('mcp_api_keys')
+      .select('id, name, enabled, created_at, updated_at, last_used_at')
+      .order('created_at', { ascending: false });
+    if (!result.error && result.data) {
+      result.data = result.data.map((r: Record<string, unknown>) => ({ ...r, can_write: false }));
+    }
   }
 
-  return data || [];
+  if (result.error) {
+    throw new Error(`Failed to list API keys: ${result.error.message}`);
+  }
+
+  return result.data || [];
 }
 
 /**
@@ -766,11 +788,25 @@ export async function validateMcpApiKey(plainKey: string): Promise<{ valid: bool
   const client = getClient();
   const bcrypt = await import('bcryptjs');
 
-  // Get all enabled keys
-  const { data: keys, error } = await client
+  // Get all enabled keys; try with can_write, fall back if column missing
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let keysResult: any = await client
     .from('mcp_api_keys')
     .select('id, key_hash, can_write')
     .eq('enabled', true);
+
+  if (keysResult.error && keysResult.error.message.includes('can_write')) {
+    keysResult = await client
+      .from('mcp_api_keys')
+      .select('id, key_hash')
+      .eq('enabled', true);
+    if (!keysResult.error && keysResult.data) {
+      keysResult.data = keysResult.data.map((k: Record<string, unknown>) => ({ ...k, can_write: false }));
+    }
+  }
+
+  const keys = keysResult.data;
+  const error = keysResult.error;
 
   if (error || !keys || keys.length === 0) {
     return { valid: false, canWrite: false };
