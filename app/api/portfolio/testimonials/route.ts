@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { revalidateTag } from 'next/cache';
+import { invalidateTag as revalidateTag } from '@/lib/cache/invalidate';
 import { PORTFOLIO_CACHE_TAG } from '@/lib/cache/portfolio-cache';
 import { requireAuth } from '@/lib/auth/api-guard';
 import { listTestimonials, createTestimonial } from '@/lib/data/portfolio-repository';
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     const payload = await request.json();
     const parsed = testimonialCreateSchema.parse(payload);
     const testimonial = await createTestimonial(parsed);
-    revalidateTag(PORTFOLIO_CACHE_TAG, 'max');
+    revalidateTag(PORTFOLIO_CACHE_TAG);
     return NextResponse.json({ testimonial }, { status: 201 });
   } catch (error) {
     const status = error instanceof Error && error.name === 'ZodError' ? 422 : 500;

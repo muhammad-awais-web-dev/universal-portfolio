@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { revalidateTag } from 'next/cache';
+import { invalidateTag as revalidateTag } from '@/lib/cache/invalidate';
 import { PORTFOLIO_CACHE_TAG } from '@/lib/cache/portfolio-cache';
 import { requireAuth } from '@/lib/auth/api-guard';
 import {
@@ -17,7 +17,7 @@ export async function PUT(request: Request, { params }: { params: Params }) {
     const { categoryId } = await params;
     const { name } = await request.json();
     if (!name || typeof name !== 'string' || !name.trim()) {
-      revalidateTag(PORTFOLIO_CACHE_TAG, 'max');
+      revalidateTag(PORTFOLIO_CACHE_TAG);
     return NextResponse.json({ error: 'name is required' }, { status: 422 });
     }
     const category = await updateProjectCategory(Number(categoryId), name);
@@ -37,7 +37,7 @@ export async function DELETE(_: Request, { params }: { params: Params }) {
   try {
     const { categoryId } = await params;
     await deleteProjectCategory(Number(categoryId));
-    revalidateTag(PORTFOLIO_CACHE_TAG, 'max');
+    revalidateTag(PORTFOLIO_CACHE_TAG);
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(

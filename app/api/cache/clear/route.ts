@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath, revalidateTag } from 'next/cache';
+import { revalidatePath } from 'next/cache';
+import { invalidateTag as revalidateTag } from '@/lib/cache/invalidate';
 import { PORTFOLIO_CACHE_TAG } from '@/lib/cache/portfolio-cache';
 import { getSessionCookie } from '@/lib/auth/cookies';
 import { verifySession } from '@/lib/auth/session';
@@ -32,7 +33,7 @@ export async function POST(_request: NextRequest) {
     }
 
     // Clear portfolio cache by revalidating key paths and the cache tag
-    revalidateTag(PORTFOLIO_CACHE_TAG, 'max');
+    revalidateTag(PORTFOLIO_CACHE_TAG);
     revalidatePath('/api/portfolio');
     revalidatePath('/');
     revalidatePath('/projects');
