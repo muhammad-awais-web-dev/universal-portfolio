@@ -3,19 +3,24 @@ import type { CloudinaryConfig } from './types';
 
 /**
  * Get Cloudinary credentials — DB first, env vars fallback.
- * Returns null if neither source has credentials.
+ * If a DB record exists (even disconnected), env vars are NOT used —
+ * a disconnected status means the user explicitly disabled it.
+ * Env vars are only used when there is no DB record at all.
  */
 export async function getCloudinaryConfig(): Promise<CloudinaryConfig | null> {
   // Try DB first
   const integration = await getIntegration('cloudinary');
-  if (integration && integration.status !== 'disconnected') {
+  if (integration) {
+    // DB record exists — respect its status; do NOT fall back to env vars
+    if (integration.status === 'disconnected') return null;
     const cfg = integration.config as Partial<CloudinaryConfig>;
     if (cfg.cloud_name && cfg.api_key && cfg.api_secret) {
       return cfg as CloudinaryConfig;
     }
+    return null;
   }
 
-  // Fallback to env vars
+  // No DB record at all — fall back to env vars
   const cloud_name = process.env.CLOUDINARY_CLOUD_NAME;
   const api_key = process.env.CLOUDINARY_API_KEY;
   const api_secret = process.env.CLOUDINARY_API_SECRET;

@@ -3,19 +3,24 @@ import type { ResendConfig } from './types';
 
 /**
  * Get Resend credentials — DB first, env vars fallback.
- * Returns null if neither source has credentials.
+ * If a DB record exists (even disconnected), env vars are NOT used —
+ * a disconnected status means the user explicitly disabled it.
+ * Env vars are only used when there is no DB record at all.
  */
 export async function getResendConfig(): Promise<ResendConfig | null> {
   // Try DB first
   const integration = await getIntegration('resend');
-  if (integration && integration.status !== 'disconnected') {
+  if (integration) {
+    // DB record exists — respect its status; do NOT fall back to env vars
+    if (integration.status === 'disconnected') return null;
     const cfg = integration.config as Partial<ResendConfig>;
     if (cfg.api_key && cfg.contact_email) {
       return cfg as ResendConfig;
     }
+    return null;
   }
 
-  // Fallback to env vars
+  // No DB record at all — fall back to env vars
   const api_key = process.env.RESEND_API_KEY;
   const contact_email = process.env.CONTACT_EMAIL;
 
