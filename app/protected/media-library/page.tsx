@@ -1,20 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Image as ImageIcon, 
-  Download, 
-  Trash2, 
-  Copy, 
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Image as ImageIcon,
+  Trash2,
+  Copy,
   Search,
-  ChevronRight,
-  Home,
-  Loader2
+  Loader2,
+  Check,
+  RefreshCw,
+  ExternalLink,
 } from 'lucide-react';
 
 interface CloudinaryImage {
@@ -26,240 +27,239 @@ interface CloudinaryImage {
   created_at: string;
 }
 
-
-const FOLDERS = [
-  { name: 'bio', label: 'Bio / Profile', icon: '👤' },
-  { name: 'projects', label: 'Projects', icon: '📁' },
-  { name: 'certifications', label: 'Certifications', icon: '🏆' },
-  { name: 'testimonials', label: 'Testimonials', icon: '💬' },
-  { name: 'settings', label: 'Settings', icon: '⚙️' },
-];
+const FOLDERS = ['bio', 'projects', 'certifications', 'testimonials', 'settings', 'skills'];
 
 export default function MediaLibraryPage() {
-  const [currentFolder, setCurrentFolder] = useState<string | null>(null);
   const [images, setImages] = useState<CloudinaryImage[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [folderFilter, setFolderFilter] = useState<string>('all');
+  const [copied, setCopied] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const loadFolderImages = async (folder: string) => {
+  const loadImages = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const response = await fetch(`/api/cloudinary/list?folder=${folder}&max_results=100`);
-      if (!response.ok) throw new Error('Failed to load images');
-      
-      const data = await response.json();
-      setImages(data.resources || []);
-    } catch (error) {
-      console.error('Error loading images:', error);
-      alert('Failed to load images');
-      setImages([]);
+      const results = await Promise.allSettled(
+        FOLDERS.map((folder) =>
+          fetch(`/api/cloudinary/list?folder=${folder}&max_results=200`)
+            .then((r) => r.json())
+            .then((d) => (d.resources || []) as CloudinaryImage[])
+        )
+      );
+      const all: CloudinaryImage[] = [];
+      results.forEach((r) => {
+        if (r.status === 'fulfilled') all.push(...r.value);
+      });
+      all.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setImages(all);
+    } catch (e) {
+      setError((e as Error).message);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleFolderClick = (folder: string) => {
-    setCurrentFolder(folder);
-    loadFolderImages(folder);
-    setSearchTerm('');
-  };
+  useEffect(() => { loadImages(); }, [loadImages]);
 
-  const handleBackToRoot = () => {
-    setCurrentFolder(null);
-    setImages([]);
-    setSearchTerm('');
-  };
-
-  const handleCopyUrl = (url: string) => {
+  const handleCopy = (url: string) => {
     navigator.clipboard.writeText(url);
-    alert('Image URL copied to clipboard');
-  };
-
-  const handleDownload = (url: string, publicId: string) => {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = publicId.split('/').pop() || 'image';
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    setCopied(url);
+    setTimeout(() => setCopied(null), 2000);
   };
 
   const handleDelete = async (publicId: string) => {
-    if (!confirm('Are you sure you want to delete this image?')) return;
-
+    if (!confirm('Delete this image? This cannot be undone.')) return;
+    setDeleting(publicId);
+    setDeleteError(null);
     try {
-      const response = await fetch('/api/cloudinary/delete', {
+      const res = await fetch('/api/cloudinary/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ public_id: publicId }),
+        body: JSON.stringify({ publicIds: [publicId] }),
       });
-
-      if (!response.ok) throw new Error('Failed to delete image');
-      
-      alert('Image deleted successfully');
-      // Reload images
-      if (currentFolder) {
-        loadFolderImages(currentFolder);
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || 'Delete failed');
       }
-    } catch (error) {
-      console.error('Error deleting image:', error);
-      alert('Failed to delete image');
+      setImages((prev) => prev.filter((img) => img.public_id !== publicId));
+    } catch (e) {
+      setDeleteError((e as Error).message);
+    } finally {
+      setDeleting(null);
     }
   };
 
-  const filteredImages = images.filter(img => 
-    img.public_id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const activeFolders = Array.from(
+    new Set(images.map((img) => img.public_id.split('/')[0]))
+  ).sort();
+
+  const filtered = images.filter((img) => {
+    const matchesFolder =
+      folderFilter === 'all' || img.public_id.startsWith(folderFilter + '/');
+    const matchesSearch =
+      !searchTerm || img.public_id.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesFolder && matchesSearch;
+  });
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Media Library</h1>
-        <p className="text-muted-foreground mt-2">
-          Browse and manage all uploaded images organized by folder
-        </p>
-      </div>
+    <div className="space-y-5">
+      {/* Controls */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-48 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 h-9"
+          />
+        </div>
 
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleBackToRoot}
-          className="gap-2"
-        >
-          <Home className="h-4 w-4" />
-          Library
+        {/* Folder filter pills */}
+        <div className="flex flex-wrap gap-1.5">
+          <button
+            onClick={() => setFolderFilter('all')}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+              folderFilter === 'all'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            All ({images.length})
+          </button>
+          {activeFolders.map((folder) => {
+            const count = images.filter((i) => i.public_id.startsWith(folder + '/')).length;
+            return (
+              <button
+                key={folder}
+                onClick={() => setFolderFilter(folder)}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize transition-colors ${
+                  folderFilter === folder
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {folder} ({count})
+              </button>
+            );
+          })}
+        </div>
+
+        <Button variant="ghost" size="sm" onClick={loadImages} disabled={loading} className="ml-auto gap-1.5 h-9">
+          <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
         </Button>
-        {currentFolder && (
-          <>
-            <ChevronRight className="h-4 w-4" />
-            <Badge variant="secondary">
-              {FOLDERS.find(f => f.name === currentFolder)?.label || currentFolder}
-            </Badge>
-          </>
-        )}
       </div>
 
-      {/* Folder View */}
-      {!currentFolder && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {FOLDERS.map((folder) => (
-            <Card
-              key={folder.name}
-              className="cursor-pointer hover:border-primary transition-colors"
-              onClick={() => handleFolderClick(folder.name)}
-            >
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="text-3xl">{folder.icon}</div>
-                  <div>
-                    <CardTitle className="text-lg">{folder.label}</CardTitle>
-                    <CardDescription>View images</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-          ))}
+      {deleteError && (
+        <Alert variant="destructive">
+          <AlertDescription>{deleteError}</AlertDescription>
+        </Alert>
+      )}
+
+      {loading && (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
         </div>
       )}
 
-      {/* Images View */}
-      {currentFolder && (
-        <div className="space-y-4">
-          {/* Search */}
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search images..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Badge variant="outline">
-              {filteredImages.length} {filteredImages.length === 1 ? 'image' : 'images'}
-            </Badge>
-          </div>
+      {!loading && error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-          {/* Loading State */}
-          {loading && (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          )}
+      {!loading && !error && filtered.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-3">
+          <ImageIcon className="h-10 w-10" />
+          <p className="text-sm">
+            {searchTerm || folderFilter !== 'all' ? 'No images match your filters' : 'No images uploaded yet'}
+          </p>
+        </div>
+      )}
 
-          {/* Empty State */}
-          {!loading && filteredImages.length === 0 && (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
-                  {searchTerm ? 'No images match your search' : 'No images in this folder'}
-                </p>
-              </CardContent>
-            </Card>
-          )}
+      {!loading && filtered.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          {filtered.map((image) => {
+            const filename = image.public_id.split('/').pop() ?? image.public_id;
+            const folder = image.public_id.split('/')[0];
+            const isCopied = copied === image.secure_url;
+            const isDeleting = deleting === image.public_id;
 
-          {/* Images Grid */}
-          {!loading && filteredImages.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filteredImages.map((image) => (
-                <Card key={image.public_id} className="overflow-hidden">
-                  {/* Image Preview */}
-                  <div className="aspect-square bg-muted relative group">
-                    <Image
-                      src={image.secure_url}
-                      alt={image.public_id}
-                      fill
-                      className="w-full h-full object-cover"
-                      unoptimized
-                    />
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      <Button
-                        size="icon"
-                        variant="secondary"
-                        onClick={() => handleCopyUrl(image.secure_url)}
-                        title="Copy URL"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="secondary"
-                        onClick={() => handleDownload(image.secure_url, image.public_id)}
-                        title="Download"
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="destructive"
-                        onClick={() => handleDelete(image.public_id)}
-                        title="Delete"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+            return (
+              <Card key={image.public_id} className="overflow-hidden">
+                {/* Thumbnail */}
+                <div className="aspect-square bg-muted relative">
+                  <Image
+                    src={image.secure_url}
+                    alt={filename}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                  <div className="absolute top-1.5 left-1.5">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 capitalize opacity-90">
+                      {folder}
+                    </Badge>
+                  </div>
+                </div>
+
+                <CardContent className="p-2.5 space-y-2">
+                  <p className="text-xs font-mono truncate text-muted-foreground" title={filename}>
+                    {filename}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {image.width}×{image.height} · {image.format.toUpperCase()}
+                  </p>
+
+                  {/* URL row */}
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 h-7 text-xs gap-1"
+                      onClick={() => handleCopy(image.secure_url)}
+                      title={image.secure_url}
+                    >
+                      {isCopied ? (
+                        <><Check className="h-3 w-3 shrink-0 text-green-500" /> Copied</>
+                      ) : (
+                        <><Copy className="h-3 w-3 shrink-0" /> Copy URL</>
+                      )}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="h-7 w-7 shrink-0"
+                      onClick={() => window.open(image.secure_url, '_blank')}
+                      title="Open in new tab"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                    </Button>
                   </div>
 
-                  {/* Image Info */}
-                  <CardContent className="p-3">
-                    <p className="text-xs font-mono truncate" title={image.public_id}>
-                      {image.public_id.split('/').pop()}
-                    </p>
-                    <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
-                      <span>{image.width} × {image.height}</span>
-                      <span className="uppercase">{image.format}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="w-full h-7 text-xs gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => handleDelete(image.public_id)}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3 w-3" />
+                    )}
+                    {isDeleting ? 'Deleting…' : 'Delete'}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
