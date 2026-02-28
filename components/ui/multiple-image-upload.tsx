@@ -171,7 +171,7 @@ export function MultipleImageUpload({
                 src={imageUrl}
                 alt={`Gallery image ${index + 1}`}
                 fill
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 unoptimized
               />
 

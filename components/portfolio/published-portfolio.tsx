@@ -80,7 +80,7 @@ export function PublishedPortfolio({ isAdmin, isEmailConfigured = false }: Publi
                       className="group border rounded-lg overflow-hidden hover:border-foreground/30 transition-colors bg-card flex flex-col">
                       {project.featured_image && (
                         <div className="relative h-44 bg-muted shrink-0">
-                          <Image src={project.featured_image} alt={project.title} fill className="object-cover" />
+                          <Image src={project.featured_image} alt={project.title} fill className="object-contain" />
                         </div>
                       )}
                       <div className="p-4 flex flex-col flex-1">
@@ -245,7 +245,7 @@ export function PublishedPortfolio({ isAdmin, isEmailConfigured = false }: Publi
                     <p className="text-sm text-muted-foreground leading-relaxed flex-1 italic">&ldquo;{t.comment}&rdquo;</p>
                     <div className="flex items-center gap-3 pt-2 border-t">
                       {t.image_url ? (
-                        <Image src={t.image_url} alt={t.name} width={36} height={36} className="rounded-full object-cover shrink-0" />
+                        <Image src={t.image_url} alt={t.name} width={36} height={36} className="rounded-full object-contain shrink-0" />
                       ) : (
                         <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0 text-sm font-semibold">
                           {t.name.charAt(0).toUpperCase()}

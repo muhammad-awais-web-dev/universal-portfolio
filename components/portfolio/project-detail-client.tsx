@@ -154,7 +154,7 @@ export function ProjectDetailClient({ slug }: ProjectDetailClientProps) {
             src={project.featured_image}
             alt={project.title}
             fill
-            className="object-cover"
+            className="object-contain"
             priority
           />
         </div>
@@ -193,7 +193,7 @@ export function ProjectDetailClient({ slug }: ProjectDetailClientProps) {
                     src={imageUrl}
                     alt={`${project.title} screenshot ${index + 1}`}
                     fill
-                    className="object-cover"
+                    className="object-contain"
                   />
                 </div>
               ))}

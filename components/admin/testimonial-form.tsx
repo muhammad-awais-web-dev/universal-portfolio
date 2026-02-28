@@ -297,7 +297,7 @@ export function TestimonialForm() {
                             alt={testimonial.name}
                             width={64}
                             height={64}
-                            className="w-16 h-16 rounded-full object-cover"
+                            className="w-16 h-16 rounded-full object-contain"
                             unoptimized
                           />
                         </div>
