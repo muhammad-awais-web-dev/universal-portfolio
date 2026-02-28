@@ -20,8 +20,8 @@ export async function POST() {
 
   try {
     const resend = new Resend(cfg.api_key);
-    const { error } = await resend.domains.list();
-    if (error) throw new Error(error.message);
+    const { data, error } = await resend.domains.list();
+    if (error || !data) throw new Error((error as { message?: string } | null)?.message || 'Invalid API key');
     await saveIntegration('resend', integration.config, 'connected');
     return NextResponse.json({ success: true, status: 'connected' });
   } catch (err) {

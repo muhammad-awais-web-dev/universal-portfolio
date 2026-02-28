@@ -37,7 +37,7 @@ function CloudinaryCard({ integration, onRefresh }: { integration: IntegrationPu
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Connection failed');
+      if (!res.ok) throw new Error(data.details || data.error || 'Connection failed');
       onRefresh();
       setForm({ cloud_name: '', api_key: '', api_secret: '' });
     } catch (e) {
@@ -75,8 +75,7 @@ function CloudinaryCard({ integration, onRefresh }: { integration: IntegrationPu
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="https://cloudinary-res.cloudinary.com/image/asset/dpr_2.0,q_auto/cloudinary_logo_square.png" alt="Cloudinary" className="w-8 h-8 rounded object-contain" />
+            <img src="/SVG%20Icons/cloudinary-svgrepo-com.svg" alt="Cloudinary" className="w-8 h-8 rounded object-contain" />
             <div>
               <CardTitle className="text-base">Cloudinary</CardTitle>
               <CardDescription className="text-xs">Image storage &amp; CDN</CardDescription>
@@ -169,7 +168,7 @@ function ResendCard({ integration, onRefresh }: { integration: IntegrationPublic
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Connection failed');
+      if (!res.ok) throw new Error(data.details || data.error || 'Connection failed');
       onRefresh();
       setForm({ api_key: '', contact_email: '' });
     } catch (e) {
@@ -207,8 +206,8 @@ function ResendCard({ integration, onRefresh }: { integration: IntegrationPublic
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="https://resend.com/static/brand/resend-icon-white.svg" alt="Resend" className="w-8 h-8 rounded object-contain bg-black p-1" />
+            <img src="/SVG%20Icons/resend-icon-black.svg" alt="Resend" className="w-8 h-8 rounded object-contain dark:hidden" />
+            <img src="/SVG%20Icons/resend-icon-white.svg" alt="Resend" className="w-8 h-8 rounded object-contain hidden dark:block" />
             <div>
               <CardTitle className="text-base">Resend</CardTitle>
               <CardDescription className="text-xs">Email delivery for contact form</CardDescription>
