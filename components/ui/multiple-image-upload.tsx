@@ -51,17 +51,20 @@ export function MultipleImageUpload({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            folder,
-            public_id: currentPublicId,
-            timestamp,
+            paramsToSign: { folder, public_id: currentPublicId, timestamp },
           }),
         });
 
         if (!signatureResponse.ok) {
-          throw new Error('Failed to get upload signature');
+          const err = await signatureResponse.json().catch(() => ({}));
+          throw new Error((err as { error?: string }).error || 'Cloudinary is not connected');
         }
 
-        const { signature } = await signatureResponse.json();
+        const { signature, cloud_name, api_key } = await signatureResponse.json() as {
+          signature: string;
+          cloud_name: string;
+          api_key: string;
+        };
 
         // Upload to Cloudinary
         const formData = new FormData();
@@ -70,10 +73,10 @@ export function MultipleImageUpload({
         formData.append('public_id', currentPublicId);
         formData.append('timestamp', timestamp.toString());
         formData.append('signature', signature);
-        formData.append('api_key', process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY || '');
+        formData.append('api_key', api_key);
 
         const uploadResponse = await fetch(
-          `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+          `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`,
           {
             method: 'POST',
             body: formData,
