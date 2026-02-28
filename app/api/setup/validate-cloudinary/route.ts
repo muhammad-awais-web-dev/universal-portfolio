@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
     const apiKey = process.env.CLOUDINARY_API_KEY;
@@ -37,9 +37,9 @@ export async function GET(request: NextRequest) {
         { valid: false, error: 'Cloudinary ping failed' },
         { status: 400 }
       );
-    } catch (cloudinaryError: any) {
+    } catch (cloudinaryError: unknown) {
       return NextResponse.json(
-        { valid: false, error: cloudinaryError.message || 'Connection failed' },
+        { valid: false, error: cloudinaryError instanceof Error ? cloudinaryError.message : 'Connection failed' },
         { status: 400 }
       );
     }

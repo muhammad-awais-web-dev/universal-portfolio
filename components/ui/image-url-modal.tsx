@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -77,9 +78,11 @@ export function ImageUrlModal({ isOpen, onClose, onSubmit, currentUrl }: ImageUr
             <div>
               <Label>Preview</Label>
               <div className="mt-2 border rounded-lg overflow-hidden bg-muted/30">
-                <img
+                <Image
                   src={preview}
                   alt="URL preview"
+                  width={800}
+                  height={400}
                   className="w-full h-auto max-h-96 object-contain"
                   onError={() => {
                     setPreview(null);

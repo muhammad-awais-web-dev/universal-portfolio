@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import { usePortfolio } from "./portfolio-context";
 import { SkillFormData } from "@/lib/models/portfolio";
 import { Button } from "@/components/ui/button";
@@ -275,7 +276,7 @@ export function SkillForm() {
               <Label htmlFor="logo_url">Skill Logo (optional)</Label>
               <ImageUpload
                 value={formData.logo_url}
-                onChange={(url, publicId) => {
+                onChange={(url, _publicId) => {
                   setFormData({ ...formData, logo_url: url });
                 }}
                 onDelete={() => {
@@ -364,10 +365,13 @@ export function SkillForm() {
                             className="px-3 py-1.5 pr-20 text-sm"
                           >
                             {skill.logo_url && (
-                              <img
+                              <Image
                                 src={skill.logo_url}
                                 alt=""
+                                width={16}
+                                height={16}
                                 className="w-4 h-4 mr-2 inline-block"
+                                unoptimized
                               />
                             )}
                             {skill.name}

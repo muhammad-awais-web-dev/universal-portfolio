@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { usePortfolio } from "./portfolio-context";
 import { TestimonialFormData } from "@/lib/models/portfolio";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Pencil, Star } from "lucide-react";
+import { X, Pencil, Star } from "lucide-react";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -291,10 +292,13 @@ export function TestimonialForm() {
                       {/* Profile Image */}
                       {testimonial.image_url && (
                         <div className="flex-shrink-0">
-                          <img
+                          <Image
                             src={testimonial.image_url}
                             alt={testimonial.name}
+                            width={64}
+                            height={64}
                             className="w-16 h-16 rounded-full object-cover"
+                            unoptimized
                           />
                         </div>
                       )}
@@ -324,10 +328,13 @@ export function TestimonialForm() {
                             {testimonial.platform_name && (
                               <div className="flex items-center gap-1 mt-1">
                                 {testimonial.platform_logo_url && (
-                                  <img
+                                  <Image
                                     src={testimonial.platform_logo_url}
                                     alt={testimonial.platform_name}
+                                    width={16}
+                                    height={16}
                                     className="w-4 h-4"
+                                    unoptimized
                                   />
                                 )}
                                 <span className="text-xs text-muted-foreground">
@@ -358,7 +365,7 @@ export function TestimonialForm() {
 
                         {/* Comment */}
                         <p className="text-sm italic border-l-2 border-primary pl-3 py-1">
-                          "{testimonial.comment}"
+                          &ldquo;{testimonial.comment}&rdquo;
                         </p>
 
                         {/* Date */}

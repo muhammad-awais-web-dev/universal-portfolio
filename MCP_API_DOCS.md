@@ -19,7 +19,7 @@ This guide shows how to test your portfolio API endpoints using `curl` in the te
 For MCP endpoints that don't require user authentication:
 
 ```bash
-API_KEY="71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
+API_KEY="YOUR_MCP_API_KEY_HERE"
 ```
 
 ### Method 2: Session Cookies (Full Access)
@@ -52,49 +52,49 @@ curl -X GET "http://localhost:3000/api/portfolio?slug=linkedin-comment"
 #### List All Skills
 ```bash
 curl -X GET http://localhost:3000/api/mcp/skills \
-  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
+  -H "x-api-key: YOUR_MCP_API_KEY_HERE"
 ```
 
 #### Get Single Skill
 ```bash
 curl -X GET http://localhost:3000/api/mcp/skills/SKILL_ID \
-  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
+  -H "x-api-key: YOUR_MCP_API_KEY_HERE"
 ```
 
 #### List All Projects
 ```bash
 curl -X GET http://localhost:3000/api/mcp/projects \
-  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
+  -H "x-api-key: YOUR_MCP_API_KEY_HERE"
 ```
 
 #### List All Certifications
 ```bash
 curl -X GET http://localhost:3000/api/mcp/certifications \
-  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
+  -H "x-api-key: YOUR_MCP_API_KEY_HERE"
 ```
 
 #### List All Education
 ```bash
 curl -X GET http://localhost:3000/api/mcp/education \
-  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
+  -H "x-api-key: YOUR_MCP_API_KEY_HERE"
 ```
 
 #### List All Experience
 ```bash
 curl -X GET http://localhost:3000/api/mcp/experience \
-  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
+  -H "x-api-key: YOUR_MCP_API_KEY_HERE"
 ```
 
 #### List Skill Categories
 ```bash
 curl -X GET http://localhost:3000/api/mcp/skill-categories \
-  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
+  -H "x-api-key: YOUR_MCP_API_KEY_HERE"
 ```
 
 #### List Project Categories
 ```bash
 curl -X GET http://localhost:3000/api/mcp/project-categories \
-  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69"
+  -H "x-api-key: YOUR_MCP_API_KEY_HERE"
 ```
 
 ### 3. Protected Portfolio Endpoints (Requires Auth)
@@ -198,7 +198,7 @@ curl -X GET http://localhost:3000/api/mcp/skills \
 ```bash
 # After running assign-all-skills.sql
 curl -X GET http://localhost:3000/api/mcp/skills \
-  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69" | \
+  -H "x-api-key: YOUR_MCP_API_KEY_HERE" | \
   jq '[.skills[] | {name: .name, categories: .category_ids}] | .[0:10]'
 ```
 
@@ -213,7 +213,7 @@ curl -X GET http://localhost:3000/api/portfolio | \
 ```bash
 # After running assign-project-categories.sql
 curl -X GET http://localhost:3000/api/mcp/projects \
-  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69" | \
+  -H "x-api-key: YOUR_MCP_API_KEY_HERE" | \
   jq '.projects[] | {title: .title, categories: .category_ids}'
 ```
 
@@ -221,7 +221,7 @@ curl -X GET http://localhost:3000/api/mcp/projects \
 ```bash
 # Get skills with their IDs to verify counts in UI
 curl -X GET http://localhost:3000/api/mcp/skills \
-  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69" | \
+  -H "x-api-key: YOUR_MCP_API_KEY_HERE" | \
   jq '.skills[] | {id: .id, name: .name, usage: (.skill_ids // [] | length)}'
 ```
 
@@ -262,7 +262,7 @@ echo "localhostFALSE/FALSE0next-auth.session-tokenYOUR_TOKEN_HERE" > cookies.txt
 ```bash
 # Test MCP endpoint
 curl -X GET http://localhost:3000/api/mcp/skills \
-  -H "x-api-key: 71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69" -v
+  -H "x-api-key: YOUR_MCP_API_KEY_HERE" -v
 ```
 
 ### Issue 2: "Method Not Allowed"
@@ -330,4 +330,4 @@ cat cookies.txt
 
 **Created:** February 17, 2026  
 **Version:** 1.0  
-**API Key (Read-Only):** `71879ed507084a6ef3b28847fd1b6342d98e0008d83b8b1f6db60a1fd66c8f69`
+**API Key (Read-Only):** `YOUR_MCP_API_KEY_HERE`

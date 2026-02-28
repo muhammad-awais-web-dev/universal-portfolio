@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { X, Loader2, Search, Trash2, Edit2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +40,7 @@ export function ImageLibraryModal({ isOpen, onClose, onSelect, folder = 'portfol
       loadImages();
       setSelectedForDelete(new Set());
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, folder]);
 
   useEffect(() => {
@@ -253,10 +255,12 @@ export function ImageLibraryModal({ isOpen, onClose, onSelect, folder = 'portfol
                         : 'border-transparent hover:border-muted'
                     }`}
                   >
-                    <img
+                    <Image
                       src={image.secure_url}
                       alt={getImageName(image.public_id)}
+                      fill
                       className="w-full h-full object-cover"
+                      unoptimized
                     />
                     {selectedImage === image.secure_url && (
                       <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">

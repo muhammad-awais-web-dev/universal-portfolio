@@ -33,10 +33,10 @@ export async function DELETE(request: NextRequest) {
       deleted: results.deleted,
       failed: results.partial || {},
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error deleting images:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to delete images' },
+      { error: error instanceof Error ? error.message : 'Failed to delete images' },
       { status: 500 }
     );
   }

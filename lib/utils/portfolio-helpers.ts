@@ -1,15 +1,15 @@
-import { Project, Certification, Education, Experience, Skill } from '@/lib/models/portfolio';
+import { Project, Certification, Education, Experience, Skill, SkillCategory, ProjectCategory, Profile, Testimonial } from '@/lib/models/portfolio';
 
 export interface PortfolioData {
-  profile: any;
+  profile: Profile | null;
   projects: Project[];
   certifications: Certification[];
   education: Education[];
   experiences: Experience[];
   skills: Skill[];
-  skillCategories: any[];
-  projectCategories: any[];
-  testimonials: any[];
+  skillCategories: SkillCategory[];
+  projectCategories: ProjectCategory[];
+  testimonials: Testimonial[];
 }
 
 export function filterPublishedData(data: PortfolioData, isAdmin: boolean): PortfolioData {
@@ -27,7 +27,7 @@ export function filterPublishedData(data: PortfolioData, isAdmin: boolean): Port
     skills: data.skills || [],
     skillCategories: data.skillCategories || [],
     projectCategories: data.projectCategories || [],
-    testimonials: data.testimonials || [],
+    testimonials: data.testimonials?.filter((t) => t.is_active !== false) || [],
   };
 }
 

@@ -4,90 +4,82 @@ import { timingSafeEqual } from 'crypto';
 import { validateMcpApiKey } from '@/lib/data/portfolio-repository';
 
 /**
- * Check if MCP is enabled
- * This reads from localStorage on server via cookies or headers
+ * Validates API key from request headers.
+ * Returns { valid, canWrite } — checks DB keys first, then env var fallback (read-only).
  */
-async function isMcpEnabled(): Promise<boolean> {
-  // For now, we'll check if there are any MCP keys in the database
-  // If MCP is explicitly disabled, keys won't validate anyway
-  // This allows MCP to work if keys exist, regardless of setting
-  // TODO: Store settings in database instead of localStorage
-  return true;
-}
-
-/**
- * Validates API key from request headers
- * Checks both database keys and environment variable (fallback)
- * Uses constant-time comparison to prevent timing attacks
- */
-export async function validateApiKey(request: NextRequest): Promise<boolean> {
+export async function validateApiKey(request: NextRequest): Promise<{ valid: boolean; canWrite: boolean }> {
   const apiKey = request.headers.get('x-mcp-api-key');
 
-  // Check if API key was provided
-  if (!apiKey) {
-    return false;
-  }
+  if (!apiKey) return { valid: false, canWrite: false };
 
   // Try database validation first
   try {
-    const isValidInDb = await validateMcpApiKey(apiKey);
-    if (isValidInDb) {
-      return true;
-    }
+    const result = await validateMcpApiKey(apiKey);
+    if (result.valid) return result;
   } catch (error) {
     console.error('Error validating API key against database:', error);
-    // Continue to environment variable fallback
+    // Fall through to env var fallback
   }
 
-  // Fallback to environment variable (for backward compatibility)
+  // Fallback to environment variable (read-only — no write permission)
   const envKey = process.env.MCP_API_KEY;
-  if (!envKey) {
-    return false;
-  }
+  if (!envKey) return { valid: false, canWrite: false };
 
-  // Use constant-time comparison to prevent timing attacks
   try {
     const expectedBuffer = Buffer.from(envKey, 'utf-8');
     const providedBuffer = Buffer.from(apiKey, 'utf-8');
 
-    // Only compare if lengths match (timingSafeEqual requires same length)
-    if (expectedBuffer.length !== providedBuffer.length) {
-      return false;
-    }
+    if (expectedBuffer.length !== providedBuffer.length) return { valid: false, canWrite: false };
 
-    return timingSafeEqual(expectedBuffer, providedBuffer);
+    const valid = timingSafeEqual(expectedBuffer, providedBuffer);
+    return { valid, canWrite: false }; // env-var keys are read-only
   } catch (error) {
     console.error('Error validating API key:', error);
-    return false;
+    return { valid: false, canWrite: false };
   }
 }
 
-/**
- * Creates a standardized 401 Unauthorized response
- */
+/** Creates a standardized 401 Unauthorized response */
 export function unauthorizedResponse() {
   return Response.json(
-    {
-      success: false,
-      error: 'Unauthorized: Invalid or missing API key',
-      timestamp: new Date().toISOString(),
-    },
+    { success: false, error: 'Unauthorized: Invalid or missing API key', timestamp: new Date().toISOString() },
     { status: 401 }
   );
 }
 
+/** Creates a standardized 403 Forbidden response */
+export function forbiddenResponse() {
+  return Response.json(
+    { success: false, error: 'Forbidden: This API key does not have write permission. Enable write access for this key in admin settings.', timestamp: new Date().toISOString() },
+    { status: 403 }
+  );
+}
+
 /**
- * Middleware wrapper for API routes requiring authentication
- * Supports both simple routes and dynamic routes with params
+ * Middleware wrapper for read-only routes (any valid API key).
  */
-export function withAuth<T = any>(
+export function withAuth<T = unknown>(
   handler: (request: NextRequest, context: T) => Promise<Response>
 ) {
   return async (request: NextRequest, context: T) => {
-    const isValid = await validateApiKey(request);
-    if (!isValid) {
-      return unauthorizedResponse();
-    }
+    const { valid } = await validateApiKey(request);
+    if (!valid) return unauthorizedResponse();
+    return handler(request, context);
+  };
+}
+
+/**
+ * Middleware wrapper for write routes.
+ * Requires a valid API key WITH can_write = true.
+ * Returns 401 if key is invalid/missing, 403 if key exists but lacks write permission.
+ */
+export function withWriteAuth<T = unknown>(
+  handler: (request: NextRequest, context: T) => Promise<Response>
+) {
+  return async (request: NextRequest, context: T) => {
+    const { valid, canWrite } = await validateApiKey(request);
+    if (!valid) return unauthorizedResponse();
+    if (!canWrite) return forbiddenResponse();
     return handler(request, context);
   };
 }

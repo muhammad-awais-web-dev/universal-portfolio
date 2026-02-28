@@ -56,6 +56,7 @@ export function PublishedPortfolio({ isAdmin, isEmailConfigured = false }: Publi
   const experiences = data.experiences || [];
   const education = data.education || [];
   const certifications = data.certifications || [];
+  const testimonials = data.testimonials || [];
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -228,6 +229,45 @@ export function PublishedPortfolio({ isAdmin, isEmailConfigured = false }: Publi
           </section>
         )}
 
+        {/* ── Testimonials ──────────────────────────────────────── */}
+        {testimonials.length > 0 && (
+          <section className="border-t">
+            <div className="max-w-5xl mx-auto px-4 py-16">
+              <div className="flex items-end justify-between gap-4 mb-8">
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight">Testimonials</h2>
+                  <p className="text-sm text-muted-foreground mt-1">{testimonials.length} {testimonials.length === 1 ? 'testimonial' : 'testimonials'}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {testimonials.map((t) => (
+                  <div key={t.id} className="border rounded-lg p-5 bg-card flex flex-col gap-3">
+                    <p className="text-sm text-muted-foreground leading-relaxed flex-1 italic">&ldquo;{t.comment}&rdquo;</p>
+                    <div className="flex items-center gap-3 pt-2 border-t">
+                      {t.image_url ? (
+                        <Image src={t.image_url} alt={t.name} width={36} height={36} className="rounded-full object-cover shrink-0" />
+                      ) : (
+                        <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0 text-sm font-semibold">
+                          {t.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm truncate">{t.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {t.position}{t.company ? `, ${t.company}` : ''}
+                        </p>
+                      </div>
+                      {t.platform_name && (
+                        <span className="ml-auto shrink-0 text-xs text-muted-foreground">{t.platform_name}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* ── Contact ───────────────────────────────────────────── */}
         {isEmailConfigured && (
           <section className="border-t">
@@ -240,7 +280,7 @@ export function PublishedPortfolio({ isAdmin, isEmailConfigured = false }: Publi
         {!isEmailConfigured && data.profile?.email && (
           <section className="border-t bg-muted/20">
             <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-              <h2 className="text-3xl font-bold mb-4">Let's Work Together</h2>
+              <h2 className="text-3xl font-bold mb-4">Let&apos;s Work Together</h2>
               <p className="text-lg text-muted-foreground mb-6">Interested in collaboration or have a project in mind?</p>
               <Button asChild size="lg">
                 <a href={`mailto:${data.profile.email}`}>Get in Touch</a>

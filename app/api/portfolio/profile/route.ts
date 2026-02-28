@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { invalidateTag as revalidateTag } from '@/lib/cache/invalidate';
+import { PORTFOLIO_CACHE_TAG } from '@/lib/cache/portfolio-cache';
 import { requireAuth } from '@/lib/auth/api-guard';
 import { getProfile, upsertProfile } from '@/lib/data/portfolio-repository';
 import { profileSchema } from '@/lib/schemas/portfolio';
 import { withPortfolioGuard } from '@/lib/auth/portfolio-guard';
 
-async function handleGET(request: NextRequest) {
+async function handleGET(_request: NextRequest) {
   try {
     const profile = await getProfile();
     return NextResponse.json({ profile });
@@ -26,6 +28,7 @@ export async function PUT(request: Request) {
     const payload = await request.json();
     const parsed = profileSchema.parse(payload);
     const profile = await upsertProfile(parsed);
+    revalidateTag(PORTFOLIO_CACHE_TAG);
     return NextResponse.json({ profile });
   } catch (error) {
     const status = error instanceof Error && error.name === 'ZodError' ? 422 : 500;

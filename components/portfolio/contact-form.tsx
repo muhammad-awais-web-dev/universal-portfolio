@@ -148,7 +148,7 @@ export function ContactForm() {
           <Alert className="mb-6 border-green-600 bg-green-50">
             <CheckCircle2 className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-600">
-              Thanks for reaching out! I'll get back to you as soon as possible.
+              Thanks for reaching out! I&apos;ll get back to you as soon as possible.
             </AlertDescription>
           </Alert>
         )}

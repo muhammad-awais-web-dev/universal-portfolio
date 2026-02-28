@@ -132,7 +132,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
         projectCategories: ProjectCategory[];
         certifications: Certification[];
         education: Education[];
-        experience: Experience[];
+        experiences: Experience[];
         testimonials: Testimonial[];
       }>("/api/portfolio");
 
@@ -143,7 +143,7 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
       setProjectCategories(data.projectCategories ?? []);
       setCertifications(data.certifications ?? []);
       setEducation(data.education ?? []);
-      setExperiences(data.experience ?? []);
+      setExperiences(data.experiences ?? []);
       setTestimonials(data.testimonials ?? []);
     } catch (err) {
       console.error("Failed to load portfolio:", err);

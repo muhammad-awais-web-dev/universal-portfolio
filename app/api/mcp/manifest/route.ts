@@ -14,7 +14,7 @@ async function handleGET(request: NextRequest) {
     const manifest: MCPManifest = {
       name: 'Universal Portfolio MCP Server',
       version: '1.0.0',
-      description: 'Read-only access to portfolio data including projects, skills, certifications, education, experience, and testimonials',
+      description: 'Full CRUD access to portfolio data. Read tools work with any valid API key. Write tools (create/update/delete) require an API key with write permission enabled.',
       tools: MCP_TOOLS,
       instructions: {
         usage: {
@@ -81,9 +81,9 @@ async function handleGET(request: NextRequest) {
     };
 
     return Response.json(mcpResponse(manifest));
-  } catch (error: any) {
+  } catch (error: unknown) {
     return Response.json(
-      mcpResponse(null, false, error.message),
+      mcpResponse(null, false, error instanceof Error ? error.message : String(error)),
       { status: 500 }
     );
   }
