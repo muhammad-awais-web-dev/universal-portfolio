@@ -1,7 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -24,6 +23,7 @@ import {
   LogOut,
   Link as LinkIcon,
   Plug,
+  X,
 } from 'lucide-react';
 import type { Profile } from '@/lib/models/portfolio';
 
@@ -93,11 +93,14 @@ function buildHref(href: string, param?: { key: string; value: string }) {
 interface Props {
   profile: Profile | null;
   onLogout: () => void;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
-export function AdminSidebar({ profile, onLogout }: Props) {
+export function AdminSidebar({ profile, onLogout, mobileOpen = false, onMobileClose }: Props) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   // Determine which groups start open: open if a child is active
   const isItemActive = (item: NavItem) => {
@@ -130,13 +133,49 @@ export function AdminSidebar({ profile, onLogout }: Props) {
     return pathname === item.href;
   };
 
+  // Close mobile menu on navigation
+  const handleNavClick = (href: string) => {
+    onMobileClose?.();
+    router.push(href);
+  };
+
   return (
-    <aside className="w-60 shrink-0 flex flex-col h-screen border-r bg-background overflow-y-auto">
+    <>
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 sm:hidden"
+          onClick={onMobileClose}
+        />
+      )}
+
+      <aside
+        className={cn(
+          // Desktop: always visible, static in flow
+          'sm:relative sm:flex sm:w-60 sm:translate-x-0 sm:z-auto',
+          // Mobile: fixed full-screen, slide in/out
+          'fixed inset-0 z-50 w-full flex flex-col sm:flex-col',
+          'transition-transform duration-200 ease-in-out',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full sm:translate-x-0',
+          'h-screen border-r bg-background overflow-y-auto shrink-0',
+        )}
+      >
       {/* Brand */}
-      <div className="h-14 flex items-center px-4 border-b shrink-0">
-        <Link href="/protected" className="font-semibold text-sm tracking-tight">
+      <div className="h-14 flex items-center justify-between px-4 border-b shrink-0">
+        <button
+          onClick={() => handleNavClick('/protected')}
+          className="font-semibold text-sm tracking-tight hover:opacity-80 transition-opacity"
+        >
           Admin Panel
-        </Link>
+        </button>
+        {/* Close button — mobile only */}
+        <button
+          className="sm:hidden p-1.5 rounded-md hover:bg-accent text-muted-foreground"
+          onClick={onMobileClose}
+          aria-label="Close menu"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
       {/* Nav */}
@@ -147,19 +186,19 @@ export function AdminSidebar({ profile, onLogout }: Props) {
             const Icon = item.icon;
             const active = isSingleLinkActive(item);
             return (
-              <Link key={item.href + item.label} href={buildHref(item.href, item.param)}>
-                <span
-                  className={cn(
-                    'flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors cursor-pointer',
-                    active
-                      ? 'bg-primary text-primary-foreground font-medium'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                  )}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  {item.label}
-                </span>
-              </Link>
+              <button
+                key={item.href + item.label}
+                onClick={() => handleNavClick(buildHref(item.href, item.param))}
+                className={cn(
+                  'w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors',
+                  active
+                    ? 'bg-primary text-primary-foreground font-medium'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                {item.label}
+              </button>
             );
           }
 
@@ -195,19 +234,19 @@ export function AdminSidebar({ profile, onLogout }: Props) {
                     const Icon = item.icon;
                     const active = isItemActive(item);
                     return (
-                      <Link key={item.label} href={buildHref(item.href, item.param)}>
-                        <span
-                          className={cn(
-                            'flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm transition-colors cursor-pointer',
-                            active
-                              ? 'bg-primary text-primary-foreground font-medium'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                          )}
-                        >
-                          <Icon className="h-3.5 w-3.5 shrink-0" />
-                          {item.label}
-                        </span>
-                      </Link>
+                      <button
+                        key={item.label}
+                        onClick={() => handleNavClick(buildHref(item.href, item.param))}
+                        className={cn(
+                          'w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm transition-colors',
+                          active
+                            ? 'bg-primary text-primary-foreground font-medium'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                        )}
+                      >
+                        <Icon className="h-3.5 w-3.5 shrink-0" />
+                        {item.label}
+                      </button>
                     );
                   })}
                 </div>
@@ -247,5 +286,6 @@ export function AdminSidebar({ profile, onLogout }: Props) {
         </div>
       </div>
     </aside>
+    </>
   );
 }

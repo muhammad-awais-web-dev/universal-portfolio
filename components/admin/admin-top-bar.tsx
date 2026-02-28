@@ -3,7 +3,8 @@
 import { usePathname, useSearchParams } from 'next/navigation';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import Link from 'next/link';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Menu } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Map routes + params → human-readable page titles
 function usePageTitle(): string {
@@ -41,12 +42,24 @@ function usePageTitle(): string {
   return 'Admin';
 }
 
-export function AdminTopBar() {
+export function AdminTopBar({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const title = usePageTitle();
 
   return (
-    <header className="h-14 shrink-0 border-b flex items-center justify-between px-6 bg-background">
-      <h1 className="text-sm font-semibold text-foreground">{title}</h1>
+    <header className="h-14 shrink-0 border-b flex items-center justify-between px-4 sm:px-6 bg-background">
+      <div className="flex items-center gap-3">
+        {/* Hamburger — visible only on mobile */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="sm:hidden h-8 w-8"
+          onClick={onMenuToggle}
+          aria-label="Open menu"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+        <h1 className="text-sm font-semibold text-foreground">{title}</h1>
+      </div>
       <div className="flex items-center gap-2">
         <Link
           href="/"
