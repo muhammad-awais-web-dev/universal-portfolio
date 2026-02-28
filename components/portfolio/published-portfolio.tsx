@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { HeroSection } from '@/components/portfolio/hero-section';
 import { ContactForm } from '@/components/portfolio/contact-form';
 import { SkillBadge } from '@/components/portfolio/skill-badge';
+import { GitHubSection } from '@/components/portfolio/github-section';
 import { PortfolioData, filterPublishedData, getDateRange, formatDate } from '@/lib/utils/portfolio-helpers';
 import { NavBarWrapper } from '@/components/admin/navbar-wrapper';
 import { Badge } from '@/components/ui/badge';
@@ -267,6 +268,9 @@ export function PublishedPortfolio({ isAdmin, isEmailConfigured = false }: Publi
             </div>
           </section>
         )}
+
+        {/* ── GitHub ────────────────────────────────────────────── */}
+        <GitHubSection />
 
         {/* ── Contact ───────────────────────────────────────────── */}
         {isEmailConfigured && (
