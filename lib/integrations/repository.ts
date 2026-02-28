@@ -5,7 +5,13 @@ function getClient() {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error('Supabase env vars not set');
-  return createClient(url, key, { auth: { persistSession: false } });
+  return createClient(url, key, {
+    auth: { persistSession: false },
+    global: {
+      // Disable Next.js fetch caching so integration status is always fresh
+      fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }),
+    },
+  });
 }
 
 function maskValue(val: string): string {
