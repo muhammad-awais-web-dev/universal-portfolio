@@ -4,7 +4,7 @@
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { getSessionCookie, hasSessionCookie } from './cookies';
+import { getSessionCookie } from './cookies';
 import { verifySession } from './session';
 
 /**

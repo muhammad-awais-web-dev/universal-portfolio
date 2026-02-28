@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import { invalidateTag as revalidateTag } from '@/lib/cache/invalidate';
+import { PORTFOLIO_CACHE_TAG } from '@/lib/cache/portfolio-cache';
 import { getSessionCookie } from '@/lib/auth/cookies';
 import { verifySession } from '@/lib/auth/session';
 
@@ -9,7 +11,7 @@ import { verifySession } from '@/lib/auth/session';
  * 
  * Access: Admin only
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // Check if user is authenticated
     const token = await getSessionCookie();
@@ -30,7 +32,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Clear portfolio cache by revalidating key paths
+    // Clear portfolio cache by revalidating key paths and the cache tag
+    revalidateTag(PORTFOLIO_CACHE_TAG);
     revalidatePath('/api/portfolio');
     revalidatePath('/');
     revalidatePath('/projects');

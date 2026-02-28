@@ -64,7 +64,7 @@ export async function verifySession(token: string): Promise<boolean> {
     
     // JWT library automatically checks expiration
     return true;
-  } catch (error) {
+  } catch {
     // Token is invalid or expired
     return false;
   }

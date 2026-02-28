@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { invalidateTag as revalidateTag } from '@/lib/cache/invalidate';
+import { PORTFOLIO_CACHE_TAG } from '@/lib/cache/portfolio-cache';
 import { requireAuth } from '@/lib/auth/api-guard';
 import { getTestimonial, updateTestimonial, deleteTestimonial } from '@/lib/data/portfolio-repository';
 import { testimonialUpdateSchema } from '@/lib/schemas/portfolio';
@@ -28,6 +30,7 @@ export async function PUT(request: Request, { params }: { params: Params }) {
     const payload = await request.json();
     const parsed = testimonialUpdateSchema.parse({ ...payload, id: Number(testimonialId) });
     const testimonial = await updateTestimonial(parsed);
+    revalidateTag(PORTFOLIO_CACHE_TAG);
     return NextResponse.json({ testimonial });
   } catch (error) {
     const status = error instanceof Error && error.name === 'ZodError' ? 422 : 500;
@@ -45,6 +48,7 @@ export async function DELETE(_: Request, { params }: { params: Params }) {
   try {
     const { testimonialId } = await params;
     await deleteTestimonial(Number(testimonialId));
+    revalidateTag(PORTFOLIO_CACHE_TAG);
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(

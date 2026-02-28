@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getCachedPortfolio } from '@/lib/cache/portfolio-cache';
 
 const baseUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -37,18 +38,41 @@ export async function GET() {
   let dynamicUrls: typeof staticUrls = [];
 
   try {
-    const res = await fetch(`${baseUrl}/api/portfolio`, { next: { revalidate: 3600 } });
-    if (res.ok) {
-      const data = await res.json();
-      dynamicUrls = (data.projects || [])
-        .filter((p: any) => p.is_published && p.slug)
-        .map((p: any) => ({
-          loc: `${baseUrl}/projects/${p.slug}`,
-          lastmod: (p.updated_at || p.created_at || today).split('T')[0],
-          changefreq: 'monthly',
-          priority: '0.7',
-        }));
-    }
+    const data = await getCachedPortfolio();
+
+    const projectUrls = (data.projects || [])
+      .filter((p) => p.is_published && p.slug)
+      .map((p) => ({
+        loc: `${baseUrl}/projects/${p.slug}`,
+        lastmod: (p.updated_at || p.created_at || today).split('T')[0],
+        changefreq: 'monthly',
+        priority: '0.7',
+      }));
+
+    const certUrls = (data.certifications || [])
+      .filter((c) => c.is_active !== false)
+      .map((c) => ({
+        loc: `${baseUrl}/certifications/${c.id}`,
+        lastmod: (c.created_at || today).split('T')[0],
+        changefreq: 'yearly',
+        priority: '0.5',
+      }));
+
+    const eduUrls = (data.education || []).map((e) => ({
+      loc: `${baseUrl}/education/${e.id}`,
+      lastmod: (e.created_at || today).split('T')[0],
+      changefreq: 'yearly',
+      priority: '0.5',
+    }));
+
+    const expUrls = (data.experiences || []).map((e) => ({
+      loc: `${baseUrl}/experience/${e.id}`,
+      lastmod: (e.created_at || today).split('T')[0],
+      changefreq: 'yearly',
+      priority: '0.5',
+    }));
+
+    dynamicUrls = [...projectUrls, ...certUrls, ...eduUrls, ...expUrls];
   } catch {
     // fallback to static only
   }

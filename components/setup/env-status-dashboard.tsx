@@ -86,7 +86,7 @@ export function EnvStatusDashboard({ status }: EnvStatusDashboardProps) {
             <div className="bg-muted/50 rounded-lg p-4 text-sm">
               <p className="font-semibold mb-2">Next Steps:</p>
               <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
-                <li>Click "Show Details" on any red card to see setup instructions</li>
+                <li>Click &ldquo;Show Details&rdquo; on any red card to see setup instructions</li>
                 <li>Create a <code className="bg-background px-1 rounded">.env.local</code> file in the project root</li>
                 <li>Add the missing environment variables</li>
                 <li>Restart the development server</li>

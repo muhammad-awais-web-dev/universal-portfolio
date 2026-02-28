@@ -76,7 +76,7 @@ export function ProjectDetailClient({ slug }: ProjectDetailClientProps) {
         <div className="max-w-5xl mx-auto px-4 py-12">
           <div className="text-center space-y-4">
             <h1 className="text-3xl font-bold">Project Not Found</h1>
-            <p className="text-muted-foreground">The project you're looking for doesn't exist or has been removed.</p>
+            <p className="text-muted-foreground">The project you&apos;re looking for doesn&apos;t exist or has been removed.</p>
             <Button asChild>
               <Link href="/projects">
                 <ArrowLeft className="mr-2 h-4 w-4" />

@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { invalidateTag as revalidateTag } from '@/lib/cache/invalidate';
+import { PORTFOLIO_CACHE_TAG } from '@/lib/cache/portfolio-cache';
 import { requireAuth } from '@/lib/auth/api-guard';
 import { listSkills, createSkill } from '@/lib/data/portfolio-repository';
 import { skillCreateSchema } from '@/lib/schemas/portfolio';
@@ -23,6 +25,7 @@ export async function POST(request: Request) {
     const payload = await request.json();
     const parsed = skillCreateSchema.parse(payload);
     const skill = await createSkill(parsed);
+    revalidateTag(PORTFOLIO_CACHE_TAG);
     return NextResponse.json({ skill }, { status: 201 });
   } catch (error) {
     const status = error instanceof Error && error.name === 'ZodError' ? 422 : 500;

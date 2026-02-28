@@ -6,7 +6,7 @@ import { NavBarWrapper } from '@/components/admin/navbar-wrapper';
 import { SkillBadge } from '@/components/portfolio/skill-badge';
 import { Badge } from '@/components/ui/badge';
 import { GraduationCap, Calendar } from 'lucide-react';
-import { formatDate, getDateRange } from '@/lib/utils/portfolio-helpers';
+import { getDateRange } from '@/lib/utils/portfolio-helpers';
 import { Education, Skill } from '@/lib/models/portfolio';
 
 export function EducationClient() {

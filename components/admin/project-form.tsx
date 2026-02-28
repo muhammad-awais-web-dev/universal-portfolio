@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import { usePortfolio } from "./portfolio-context";
 import { ProjectFormData } from "@/lib/models/portfolio";
 import { Button } from "@/components/ui/button";
@@ -228,7 +229,7 @@ export function ProjectForm() {
               <Label htmlFor="featured_image">Featured Image *</Label>
               <ImageUpload
                 value={formData.featured_image}
-                onChange={(url, publicId) => {
+                onChange={(url, _publicId) => {
                   setFormData({ ...formData, featured_image: url });
                 }}
                 onDelete={() => {
@@ -478,10 +479,13 @@ export function ProjectForm() {
                   className="group relative flex items-start gap-4 p-4 border rounded-lg hover:border-primary/50 transition-colors"
                 >
                   {project.featured_image && (
-                    <img
+                    <Image
                       src={project.featured_image}
                       alt={project.title}
+                      width={96}
+                      height={96}
                       className="w-24 h-24 object-cover rounded"
+                      unoptimized
                     />
                   )}
                   <div className="flex-1">

@@ -4,7 +4,7 @@
  */
 
 import { cookies } from 'next/headers';
-import { SESSION_DURATION, getSessionExpiryDate } from './session';
+import { SESSION_DURATION } from './session';
 
 const SESSION_COOKIE_NAME = 'portfolio_session';
 

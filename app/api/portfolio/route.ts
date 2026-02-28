@@ -11,7 +11,7 @@ import { withPortfolioGuard } from '@/lib/auth/portfolio-guard';
  * - Same-origin requests: Public (no authentication required)
  * - External requests: Requires API key via x-mcp-api-key header
  */
-async function handleGET(request: NextRequest) {
+async function handleGET(_request: NextRequest) {
   try {
     const portfolio = await getCachedPortfolio();
     return NextResponse.json(portfolio);

@@ -27,7 +27,7 @@ export function useAdminSession() {
         isLoggedIn: data.isLoggedIn || false,
         isChecking: false,
       });
-    } catch (error) {
+    } catch {
       setSession({
         isLoggedIn: false,
         isChecking: false,

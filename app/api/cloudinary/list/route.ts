@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 import { requireAuth } from '@/lib/auth/api-guard';
 
+interface CloudinaryResource {
+  public_id: string;
+  secure_url: string;
+  width: number;
+  height: number;
+  format: string;
+  bytes: number;
+  created_at: string;
+}
+
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -28,7 +38,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      resources: result.resources.map((resource: any) => ({
+      resources: result.resources.map((resource: CloudinaryResource) => ({
         public_id: resource.public_id,
         secure_url: resource.secure_url,
         width: resource.width,

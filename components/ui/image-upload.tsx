@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { Upload, Link2, FolderOpen, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ImageUrlModal } from './image-url-modal';
@@ -144,10 +145,12 @@ export function ImageUpload({
       <div className="relative w-full h-64 bg-muted/30 rounded-lg overflow-hidden border-2 border-dashed border-gray-300">
         {preview ? (
           <>
-            <img
+            <Image
               src={preview}
               alt="Preview"
+              fill
               className="w-full h-full object-cover"
+              unoptimized
             />
             {/* Delete button overlay */}
             <button

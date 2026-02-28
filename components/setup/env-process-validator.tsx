@@ -30,15 +30,6 @@ interface EnvProcessValidatorProps {
   forceDevMode: boolean;
 }
 
-// Hash function for environment variables
-async function hashString(str: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(str);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
 // Get stored validation from localStorage
 function getStoredValidation() {
   if (typeof window === 'undefined') return null;
@@ -69,6 +60,7 @@ export function EnvProcessValidator({ missingVars, forceDevMode }: EnvProcessVal
 
   useEffect(() => {
     checkCacheAndValidate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function checkCacheAndValidate() {
@@ -271,7 +263,7 @@ export function EnvProcessValidator({ missingVars, forceDevMode }: EnvProcessVal
           } : s
         ));
       }
-    } catch (error) {
+    } catch {
       results.supabaseConnection = false;
       setServices(prev => prev.map(s => 
         s.id === 'supabase' ? {
@@ -446,7 +438,7 @@ export function EnvProcessValidator({ missingVars, forceDevMode }: EnvProcessVal
           } : s
         ));
       }
-    } catch (error) {
+    } catch {
       results.cloudinaryConnection = false;
       setServices(prev => prev.map(s => 
         s.id === 'cloudinary' ? {

@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { Resend } from 'resend';
+import { verifySession } from '@/lib/auth/session';
 import { isEmailConfigured, getResendApiKey, getContactEmail } from '@/lib/utils/email-config';
 
 /**
  * GET /api/test-email
  * Send a test email to verify Resend configuration
  * 
- * Access: Public (for testing purposes)
+ * Access: Admin only (requires valid session)
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
+  // Require admin authentication
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('portfolio_session')?.value;
+  if (!sessionToken || !(await verifySession(sessionToken))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     if (!isEmailConfigured()) {
       return NextResponse.json(
