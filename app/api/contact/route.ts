@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { isEmailConfigured, getResendApiKey, getContactEmail } from '@/lib/utils/email-config';
+import { getResendConfig } from '@/lib/integrations/resend-config';
+import { markIntegrationError } from '@/lib/integrations/repository';
 
 // Rate limiting storage (in production, use Redis or similar)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -48,7 +49,8 @@ const reasonLabels: Record<string, string> = {
 export async function POST(request: NextRequest) {
   try {
     // Check email configuration
-    if (!isEmailConfigured()) {
+    const resendCfg = await getResendConfig();
+    if (!resendCfg) {
       return NextResponse.json(
         { error: 'Email service not configured' },
         { status: 503 }
@@ -100,8 +102,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Send email
-    const resend = new Resend(getResendApiKey()!);
-    const contactEmail = getContactEmail()!;
+    const resend = new Resend(resendCfg.api_key);
+    const contactEmail = resendCfg.contact_email;;
 
     const timestamp = new Date().toLocaleString('en-US', {
       weekday: 'long', year: 'numeric', month: 'long',
@@ -212,6 +214,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Resend error:', error);
+      markIntegrationError('resend', error.message || 'Failed to send email');
       return NextResponse.json(
         { error: 'Failed to send email' },
         { status: 500 }

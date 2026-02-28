@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 import { requireAuth } from '@/lib/auth/api-guard';
+import { getCloudinaryConfig } from '@/lib/integrations/cloudinary-config';
 
 interface CloudinaryResource {
   public_id: string;
@@ -12,17 +13,13 @@ interface CloudinaryResource {
   created_at: string;
 }
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
 export async function GET(request: NextRequest) {
-  // Require authentication
   const authError = await requireAuth();
   if (authError) return authError;
+
+  const cfg = await getCloudinaryConfig();
+  if (!cfg) return NextResponse.json({ error: 'Cloudinary is not configured' }, { status: 503 });
+  cloudinary.config({ cloud_name: cfg.cloud_name, api_key: cfg.api_key, api_secret: cfg.api_secret });
 
   try {
     const { searchParams } = new URL(request.url);

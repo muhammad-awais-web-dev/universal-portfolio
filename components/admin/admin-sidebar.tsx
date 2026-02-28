@@ -23,6 +23,7 @@ import {
   ChevronRight,
   LogOut,
   Link as LinkIcon,
+  Plug,
 } from 'lucide-react';
 import type { Profile } from '@/lib/models/portfolio';
 
@@ -65,6 +66,10 @@ const NAV: SidebarEntry[] = [
   {
     type: 'link',
     item: { label: 'Media Library', href: '/protected/media-library', icon: ImageIcon },
+  },
+  {
+    type: 'link',
+    item: { label: 'Integrations', href: '/protected/integrations', icon: Plug },
   },
   {
     type: 'group',
