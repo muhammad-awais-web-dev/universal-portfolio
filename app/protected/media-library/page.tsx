@@ -16,7 +16,10 @@ import {
   Check,
   RefreshCw,
   ExternalLink,
+  AlertTriangle,
 } from 'lucide-react';
+import { useCloudinaryStatus } from '@/hooks/use-cloudinary-status';
+import Link from 'next/link';
 
 interface CloudinaryImage {
   public_id: string;
@@ -47,6 +50,7 @@ export default function MediaLibraryPage() {
   const [copied, setCopied] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const cloudinaryStatus = useCloudinaryStatus();
 
   const loadImages = useCallback(async () => {
     setLoading(true);
@@ -121,6 +125,23 @@ export default function MediaLibraryPage() {
 
   return (
     <div className="space-y-5">
+      {/* Cloudinary not connected banner */}
+      {cloudinaryStatus === 'disconnected' && (
+        <Alert className="border-orange-300 bg-orange-50 dark:bg-orange-950/30">
+          <AlertTriangle className="h-4 w-4 text-orange-500" />
+          <AlertDescription className="flex items-center justify-between">
+            <span className="text-orange-700 dark:text-orange-400">
+              Cloudinary is not connected. Connect it to upload and manage images.
+            </span>
+            <Link href="/protected/integrations">
+              <button className="ml-4 text-sm font-medium text-orange-600 dark:text-orange-400 underline underline-offset-2 hover:no-underline whitespace-nowrap">
+                Go to Integrations →
+              </button>
+            </Link>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-48 max-w-sm">

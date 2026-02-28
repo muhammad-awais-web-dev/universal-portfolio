@@ -6,6 +6,8 @@ import { Button } from './button';
 import { ImageUrlModal } from './image-url-modal';
 import { ImageLibraryModal } from './image-library-modal';
 import { X, Upload, Link2, FolderOpen, GripVertical } from 'lucide-react';
+import { useCloudinaryStatus } from '@/hooks/use-cloudinary-status';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface MultipleImageUploadProps {
   images: string[];
@@ -26,6 +28,8 @@ export function MultipleImageUpload({
   const [showUrlModal, setShowUrlModal] = useState(false);
   const [showLibraryModal, setShowLibraryModal] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const cloudinaryStatus = useCloudinaryStatus();
+  const cloudinaryReady = cloudinaryStatus === 'connected';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -206,15 +210,26 @@ export function MultipleImageUpload({
             onChange={handleFileSelect}
             className="hidden"
           />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            {isUploading ? 'Uploading...' : 'Upload Images'}
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading || !cloudinaryReady}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {isUploading ? 'Uploading...' : 'Upload Images'}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {!cloudinaryReady && (
+                <TooltipContent>Connect Cloudinary in Integrations to upload images</TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
           <Button
             type="button"
             variant="outline"
@@ -223,14 +238,26 @@ export function MultipleImageUpload({
             <Link2 className="h-4 w-4 mr-2" />
             From URL
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowLibraryModal(true)}
-          >
-            <FolderOpen className="h-4 w-4 mr-2" />
-            From Library
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowLibraryModal(true)}
+                    disabled={!cloudinaryReady}
+                  >
+                    <FolderOpen className="h-4 w-4 mr-2" />
+                    From Library
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {!cloudinaryReady && (
+                <TooltipContent>Connect Cloudinary in Integrations to browse library</TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         </div>
       )}
 

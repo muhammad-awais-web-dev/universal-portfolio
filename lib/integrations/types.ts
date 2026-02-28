@@ -1,4 +1,4 @@
-export type IntegrationKey = 'cloudinary' | 'resend';
+export type IntegrationKey = 'cloudinary' | 'resend' | 'github';
 export type IntegrationStatus = 'connected' | 'disconnected' | 'error';
 
 export interface CloudinaryConfig {
@@ -12,7 +12,19 @@ export interface ResendConfig {
   contact_email: string;
 }
 
-export type IntegrationConfig = CloudinaryConfig | ResendConfig | Record<string, string>;
+export interface GitHubConfig {
+  username: string;
+  token?: string; // optional — public repos work without it
+  repo?: string;  // optional default repo
+  // Feature toggles
+  show_commit_chart: boolean;
+  show_top_languages: boolean;
+  show_contribution_graph: boolean;
+  show_pinned_repos: boolean;
+  show_stats: boolean;
+}
+
+export type IntegrationConfig = CloudinaryConfig | ResendConfig | GitHubConfig | Record<string, string | boolean>;
 
 export interface Integration {
   key: IntegrationKey;

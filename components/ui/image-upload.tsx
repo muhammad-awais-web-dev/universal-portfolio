@@ -6,6 +6,8 @@ import { Upload, Link2, FolderOpen, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ImageUrlModal } from './image-url-modal';
 import { ImageLibraryModal } from './image-library-modal';
+import { useCloudinaryStatus } from '@/hooks/use-cloudinary-status';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ImageUploadProps {
   value?: string; // Current image URL
@@ -35,6 +37,8 @@ export function ImageUpload({
   const [showUrlModal, setShowUrlModal] = useState(false);
   const [showLibraryModal, setShowLibraryModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cloudinaryStatus = useCloudinaryStatus();
+  const cloudinaryReady = cloudinaryStatus === 'connected';
 
   useEffect(() => {
     setPreview(value);
@@ -192,40 +196,60 @@ export function ImageUpload({
       </div>
 
       {/* Action Buttons */}
-      <div className="grid grid-cols-3 gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={triggerFileInput}
-          disabled={isUploading}
-          className="w-full"
-        >
-          <Upload className="h-4 w-4 mr-2" />
-          Upload Image
-        </Button>
-        
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setShowUrlModal(true)}
-          disabled={isUploading}
-          className="w-full"
-        >
-          <Link2 className="h-4 w-4 mr-2" />
-          From URL
-        </Button>
-        
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setShowLibraryModal(true)}
-          disabled={isUploading}
-          className="w-full"
-        >
-          <FolderOpen className="h-4 w-4 mr-2" />
-          From Library
-        </Button>
-      </div>
+      <TooltipProvider>
+        <div className="grid grid-cols-3 gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="w-full">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={triggerFileInput}
+                  disabled={isUploading || !cloudinaryReady}
+                  className="w-full"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Image
+                </Button>
+              </span>
+            </TooltipTrigger>
+            {!cloudinaryReady && (
+              <TooltipContent>Connect Cloudinary in Integrations to upload images</TooltipContent>
+            )}
+          </Tooltip>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowUrlModal(true)}
+            disabled={isUploading}
+            className="w-full"
+          >
+            <Link2 className="h-4 w-4 mr-2" />
+            From URL
+          </Button>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="w-full">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowLibraryModal(true)}
+                  disabled={isUploading || !cloudinaryReady}
+                  className="w-full"
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  From Library
+                </Button>
+              </span>
+            </TooltipTrigger>
+            {!cloudinaryReady && (
+              <TooltipContent>Connect Cloudinary in Integrations to browse library</TooltipContent>
+            )}
+          </Tooltip>
+        </div>
+      </TooltipProvider>
 
       {/* Info text */}
       <p className="text-xs text-muted-foreground">
