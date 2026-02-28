@@ -1,11 +1,27 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { X, Loader2, Search, Trash2, Edit2, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+
+const ALL_FOLDERS = [
+  'portfolio/avatars',
+  'portfolio/projects',
+  'portfolio/projects/gallery',
+  'portfolio/skills',
+  'portfolio/certifications',
+  'portfolio/certifications/gallery',
+  'portfolio/testimonials',
+  'settings',
+];
+
+function folderLabel(f: string) {
+  return f.replace(/^portfolio\//, '').replace(/\//g, ' / ');
+}
 
 interface CloudinaryImage {
   public_id: string;
@@ -23,9 +39,11 @@ interface ImageLibraryModalProps {
   folder?: string;
 }
 
-export function ImageLibraryModal({ isOpen, onClose, onSelect, folder = 'portfolio' }: ImageLibraryModalProps) {
-  const [images, setImages] = useState<CloudinaryImage[]>([]);
+export function ImageLibraryModal({ isOpen, onClose, onSelect, folder }: ImageLibraryModalProps) {
+  const [allImages, setAllImages] = useState<CloudinaryImage[]>([]);
   const [filteredImages, setFilteredImages] = useState<CloudinaryImage[]>([]);
+  const [activeFolder, setActiveFolder] = useState<string>('all');
+  const [activeFolders, setActiveFolders] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,47 +53,67 @@ export function ImageLibraryModal({ isOpen, onClose, onSelect, folder = 'portfol
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
 
-  useEffect(() => {
-    if (isOpen) {
-      loadImages();
-      setSelectedForDelete(new Set());
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, folder]);
-
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      const filtered = images.filter(img => 
-        img.public_id.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredImages(filtered);
-    } else {
-      setFilteredImages(images);
-    }
-  }, [searchQuery, images]);
-
-  const loadImages = async () => {
+  const loadImages = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/cloudinary/list?folder=${encodeURIComponent(folder)}&max_results=100`);
-      if (!response.ok) {
-        throw new Error('Failed to load images');
-      }
-      const data = await response.json();
-      setImages(data.resources);
-      setFilteredImages(data.resources);
-    } catch (err) {
-      console.error('Error loading images:', err);
+      const results = await Promise.all(
+        ALL_FOLDERS.map((f) =>
+          fetch(`/api/cloudinary/list?folder=${encodeURIComponent(f)}&max_results=100`)
+            .then((r) => (r.ok ? r.json() : { resources: [] }))
+            .then((d) => (d.resources as CloudinaryImage[]) ?? [])
+            .catch(() => [] as CloudinaryImage[])
+        )
+      );
+      const flat = results.flat();
+      // deduplicate by public_id
+      const seen = new Set<string>();
+      const deduped = flat.filter((img) => {
+        if (seen.has(img.public_id)) return false;
+        seen.add(img.public_id);
+        return true;
+      });
+      setAllImages(deduped);
+      // which folders actually have images
+      const withImages = ALL_FOLDERS.filter((f) =>
+        deduped.some((img) => img.public_id.startsWith(f + '/') || img.public_id === f)
+      );
+      setActiveFolders(withImages);
+    } catch {
       setError('Failed to load images from library');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      // set default folder filter
+      const defaultFolder = folder && ALL_FOLDERS.includes(folder) ? folder : 'all';
+      setActiveFolder(defaultFolder);
+      setSelectedForDelete(new Set());
+      setSearchQuery('');
+      setSelectedImage(null);
+      loadImages();
+    }
+  }, [isOpen, folder, loadImages]);
+
+  useEffect(() => {
+    let imgs = allImages;
+    if (activeFolder !== 'all') {
+      imgs = imgs.filter((img) => img.public_id.startsWith(activeFolder + '/'));
+    }
+    if (searchQuery.trim()) {
+      imgs = imgs.filter((img) =>
+        img.public_id.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    setFilteredImages(imgs);
+  }, [allImages, activeFolder, searchQuery]);
 
   const handleSelectImage = () => {
     if (selectedImage) {
-      const image = filteredImages.find(img => img.secure_url === selectedImage);
+      const image = filteredImages.find((img) => img.secure_url === selectedImage);
       if (image) {
         onSelect(image.secure_url, image.public_id);
         onClose();
@@ -85,40 +123,26 @@ export function ImageLibraryModal({ isOpen, onClose, onSelect, folder = 'portfol
 
   const toggleSelectForDelete = (publicId: string) => {
     const newSelected = new Set(selectedForDelete);
-    if (newSelected.has(publicId)) {
-      newSelected.delete(publicId);
-    } else {
-      newSelected.add(publicId);
-    }
+    if (newSelected.has(publicId)) newSelected.delete(publicId);
+    else newSelected.add(publicId);
     setSelectedForDelete(newSelected);
   };
 
   const handleBulkDelete = async () => {
     if (selectedForDelete.size === 0) return;
-    
-    if (!confirm(`Are you sure you want to delete ${selectedForDelete.size} image(s)? This action cannot be undone.`)) {
-      return;
-    }
-
+    if (!confirm(`Delete ${selectedForDelete.size} image(s)? This cannot be undone.`)) return;
     setIsDeleting(true);
     setError(null);
-
     try {
       const response = await fetch('/api/cloudinary/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ publicIds: Array.from(selectedForDelete) }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete images');
-      }
-
-      // Reload images after deletion
+      if (!response.ok) throw new Error('Failed to delete images');
       setSelectedForDelete(new Set());
       await loadImages();
-    } catch (err) {
-      console.error('Error deleting images:', err);
+    } catch {
       setError('Failed to delete images');
     } finally {
       setIsDeleting(false);
@@ -126,9 +150,8 @@ export function ImageLibraryModal({ isOpen, onClose, onSelect, folder = 'portfol
   };
 
   const startRename = (publicId: string) => {
-    const filename = publicId.split('/').pop() || '';
     setRenamingId(publicId);
-    setNewName(filename);
+    setNewName(publicId.split('/').pop() || '');
   };
 
   const handleRename = async (oldPublicId: string) => {
@@ -136,37 +159,25 @@ export function ImageLibraryModal({ isOpen, onClose, onSelect, folder = 'portfol
       setRenamingId(null);
       return;
     }
-
     setError(null);
-
     try {
-      // Construct new public_id with same folder path
       const parts = oldPublicId.split('/');
       parts[parts.length - 1] = newName;
       const newPublicId = parts.join('/');
-
       const response = await fetch('/api/cloudinary/rename', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ oldPublicId, newPublicId }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to rename image');
-      }
-
-      // Reload images after rename
+      if (!response.ok) throw new Error('Failed to rename image');
       setRenamingId(null);
       await loadImages();
-    } catch (err) {
-      console.error('Error renaming image:', err);
+    } catch {
       setError('Failed to rename image');
     }
   };
 
-  const getImageName = (publicId: string) => {
-    return publicId.split('/').pop() || publicId;
-  };
+  const getImageName = (publicId: string) => publicId.split('/').pop() || publicId;
 
   if (!isOpen) return null;
 
@@ -178,12 +189,7 @@ export function ImageLibraryModal({ isOpen, onClose, onSelect, folder = 'portfol
           <div className="flex items-center gap-4">
             <h2 className="text-lg font-semibold">Image Library</h2>
             {selectedForDelete.size > 0 && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleBulkDelete}
-                disabled={isDeleting}
-              >
+              <Button variant="destructive" size="sm" onClick={handleBulkDelete} disabled={isDeleting}>
                 {isDeleting ? (
                   <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Deleting...</>
                 ) : (
@@ -192,16 +198,13 @@ export function ImageLibraryModal({ isOpen, onClose, onSelect, folder = 'portfol
               </Button>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-muted rounded-md transition-colors"
-          >
+          <button onClick={onClose} className="p-1 hover:bg-muted rounded-md transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Search */}
-        <div className="p-4 border-b">
+        <div className="p-4 border-b space-y-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -212,6 +215,28 @@ export function ImageLibraryModal({ isOpen, onClose, onSelect, folder = 'portfol
               className="pl-9"
             />
           </div>
+          {/* Folder filter pills */}
+          {activeFolders.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              <Badge
+                variant={activeFolder === 'all' ? 'default' : 'outline'}
+                className="cursor-pointer"
+                onClick={() => setActiveFolder('all')}
+              >
+                All
+              </Badge>
+              {activeFolders.map((f) => (
+                <Badge
+                  key={f}
+                  variant={activeFolder === f ? 'default' : 'outline'}
+                  className="cursor-pointer capitalize"
+                  onClick={() => setActiveFolder(f)}
+                >
+                  {folderLabel(f)}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Content */}
@@ -233,10 +258,7 @@ export function ImageLibraryModal({ isOpen, onClose, onSelect, folder = 'portfol
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filteredImages.map((image) => (
-                <div
-                  key={image.public_id}
-                  className="relative group"
-                >
+                <div key={image.public_id} className="relative group">
                   {/* Selection Checkbox */}
                   <div className="absolute top-2 left-2 z-10">
                     <Checkbox
@@ -249,7 +271,7 @@ export function ImageLibraryModal({ isOpen, onClose, onSelect, folder = 'portfol
                   {/* Image */}
                   <button
                     onClick={() => setSelectedImage(image.secure_url)}
-                    className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all w-full ${
+                    className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all w-full bg-muted ${
                       selectedImage === image.secure_url
                         ? 'border-primary shadow-lg'
                         : 'border-transparent hover:border-muted'
@@ -259,7 +281,7 @@ export function ImageLibraryModal({ isOpen, onClose, onSelect, folder = 'portfol
                       src={image.secure_url}
                       alt={getImageName(image.public_id)}
                       fill
-                      className="w-full h-full object-cover"
+                      className="object-contain"
                       unoptimized
                     />
                     {selectedImage === image.secure_url && (
@@ -285,20 +307,10 @@ export function ImageLibraryModal({ isOpen, onClose, onSelect, folder = 'portfol
                           className="h-7 text-xs"
                           autoFocus
                         />
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 w-7 p-0"
-                          onClick={() => handleRename(image.public_id)}
-                        >
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleRename(image.public_id)}>
                           <Check className="h-3 w-3" />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 w-7 p-0"
-                          onClick={() => setRenamingId(null)}
-                        >
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setRenamingId(null)}>
                           <X className="h-3 w-3" />
                         </Button>
                       </div>
@@ -328,12 +340,8 @@ export function ImageLibraryModal({ isOpen, onClose, onSelect, folder = 'portfol
             {filteredImages.length} image{filteredImages.length !== 1 ? 's' : ''} found
           </p>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button onClick={handleSelectImage} disabled={!selectedImage}>
-              Select Image
-            </Button>
+            <Button variant="outline" onClick={onClose}>Cancel</Button>
+            <Button onClick={handleSelectImage} disabled={!selectedImage}>Select Image</Button>
           </div>
         </div>
       </div>

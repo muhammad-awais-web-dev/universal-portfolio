@@ -214,7 +214,7 @@ export default function MediaLibraryPage() {
                     src={image.secure_url}
                     alt={filename}
                     fill
-                    className="object-cover"
+                    className="object-contain"
                     unoptimized
                   />
                   <div className="absolute top-1.5 left-1.5">
