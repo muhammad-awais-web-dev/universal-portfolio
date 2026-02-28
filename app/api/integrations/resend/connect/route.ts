@@ -20,9 +20,8 @@ export async function POST(request: NextRequest) {
   // Validate by fetching Resend account info (lightweight API call)
   try {
     const resend = new Resend(api_key);
-    // Use domains list as a lightweight validation ping
-    const { error } = await resend.domains.list();
-    if (error) throw new Error(error.message);
+    const { data, error } = await resend.domains.list();
+    if (error || !data) throw new Error((error as { message?: string } | null)?.message || 'Invalid API key');
   } catch (err) {
     return NextResponse.json(
       { error: 'Invalid Resend API key', details: (err as Error).message },
