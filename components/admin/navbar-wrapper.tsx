@@ -2,9 +2,7 @@
 
 import { useState } from 'react';
 import { useAdminSession } from '@/lib/hooks/useAdminSession';
-import { useAdminProfile } from '@/lib/hooks/useAdminProfile';
 import { usePublicSettings } from '@/lib/hooks/usePublicSettings';
-import { AdminNavBar } from './admin-header-bar';
 import { LogoDisplay } from '@/components/portfolio/logo-display';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import Link from 'next/link';
@@ -18,14 +16,13 @@ const NAV_LINKS = [
 ];
 
 export function NavBarWrapper() {
-  const { isLoggedIn, isChecking, logout } = useAdminSession();
-  const { profile } = useAdminProfile(isLoggedIn);
+  const { isChecking } = useAdminSession();
   const { settings } = usePublicSettings();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const brandFallback = settings.website_name || profile?.full_name || 'Portfolio';
+  const brandFallback = settings.website_name || 'Portfolio';
 
-  // While checking, show skeleton navbar with logo
+  // While checking auth, show minimal navbar skeleton
   if (isChecking) {
     return (
       <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
@@ -37,11 +34,6 @@ export function NavBarWrapper() {
         </div>
       </nav>
     );
-  }
-
-  // If logged in, show admin navbar
-  if (isLoggedIn) {
-    return <AdminNavBar profile={profile} onLogout={logout} />;
   }
 
   // Public navbar
@@ -95,3 +87,4 @@ export function NavBarWrapper() {
     </nav>
   );
 }
+

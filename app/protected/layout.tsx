@@ -1,26 +1,58 @@
-import { NavBarWrapper } from "@/components/admin/navbar-wrapper";
-import { GitHubPromoBanner } from "@/components/github-promo-banner";
+'use client';
+
+import { Suspense } from 'react';
+import { useAdminSession } from '@/lib/hooks/useAdminSession';
+import { useAdminProfile } from '@/lib/hooks/useAdminProfile';
+import { AdminSidebar } from '@/components/admin/admin-sidebar';
+import { AdminTopBar } from '@/components/admin/admin-top-bar';
+import { GitHubPromoBanner } from '@/components/github-promo-banner';
+
+function AdminShell({ children }: { children: React.ReactNode }) {
+  const { isLoggedIn, isChecking, logout } = useAdminSession();
+  const { profile } = useAdminProfile(isLoggedIn);
+
+  // While checking auth or not logged in, render children directly (login page)
+  if (isChecking || !isLoggedIn) {
+    return (
+      <main className="min-h-screen flex flex-col items-center">
+        <div className="flex-1 w-full flex flex-col gap-20 items-center">
+          <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5 w-full">
+            {children}
+          </div>
+        </div>
+        <GitHubPromoBanner />
+      </main>
+    );
+  }
+
+  // Logged in: full sidebar layout
+  return (
+    <div className="flex h-screen overflow-hidden bg-background">
+      {/* Left sidebar */}
+      <Suspense fallback={null}>
+        <AdminSidebar profile={profile} onLogout={logout} />
+      </Suspense>
+
+      {/* Right: top bar + scrollable content */}
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <Suspense fallback={<div className="h-14 border-b shrink-0" />}>
+          <AdminTopBar />
+        </Suspense>
+        <main className="flex-1 overflow-y-auto p-6">
+          {children}
+        </main>
+      </div>
+
+      <GitHubPromoBanner />
+    </div>
+  );
+}
 
 export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <main className="min-h-screen flex flex-col items-center">
-      <div className="flex-1 w-full flex flex-col gap-20 items-center">
-        <NavBarWrapper />
-        <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
-          {children}
-        </div>
-
-        <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs gap-8 py-16">
-          <p>Portfolio Management System</p>
-        </footer>
-      </div>
-      
-      {/* GitHub Promo Banner - Fixed bottom-right */}
-      <GitHubPromoBanner />
-    </main>
-  );
+  return <AdminShell>{children}</AdminShell>;
 }
+
