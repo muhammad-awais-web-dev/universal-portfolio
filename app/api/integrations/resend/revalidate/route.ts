@@ -18,10 +18,16 @@ export async function POST() {
     return NextResponse.json({ error: 'Stored credentials are incomplete' }, { status: 400 });
   }
 
+  // Validate by sending a test email to the configured contact address
   try {
     const resend = new Resend(cfg.api_key);
-    const { data, error } = await resend.domains.list();
-    if (error || !data) throw new Error((error as { message?: string } | null)?.message || 'Invalid API key');
+    const { error } = await resend.emails.send({
+      from: 'Portfolio <onboarding@resend.dev>',
+      to: cfg.contact_email,
+      subject: 'Resend connection re-test',
+      html: '<p>This is an automated re-test of your Resend integration.</p>',
+    });
+    if (error) throw new Error((error as { message?: string }).message || 'Send failed');
     await saveIntegration('resend', integration.config, 'connected');
     return NextResponse.json({ success: true, status: 'connected' });
   } catch (err) {

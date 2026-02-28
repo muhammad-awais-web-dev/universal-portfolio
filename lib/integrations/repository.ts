@@ -62,7 +62,7 @@ export async function saveIntegration(
   status: IntegrationStatus = 'connected'
 ): Promise<void> {
   const client = getClient();
-  await client.from('integrations').upsert({
+  const { error } = await client.from('integrations').upsert({
     key,
     config,
     status,
@@ -70,11 +70,12 @@ export async function saveIntegration(
     connected_at: status === 'connected' ? new Date().toISOString() : undefined,
     updated_at: new Date().toISOString(),
   });
+  if (error) throw new Error(error.message);
 }
 
 export async function disconnectIntegration(key: IntegrationKey): Promise<void> {
   const client = getClient();
-  await client.from('integrations').upsert({
+  const { error } = await client.from('integrations').upsert({
     key,
     config: {},
     status: 'disconnected',
@@ -82,6 +83,7 @@ export async function disconnectIntegration(key: IntegrationKey): Promise<void> 
     connected_at: null,
     updated_at: new Date().toISOString(),
   });
+  if (error) throw new Error(error.message);
 }
 
 /** Call this fire-and-forget when a runtime usage of an integration fails */

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
 import { requireAuth } from '@/lib/auth/api-guard';
 import { saveIntegration } from '@/lib/integrations/repository';
 
@@ -17,18 +16,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'api_key and contact_email are required' }, { status: 400 });
   }
 
-  // Validate by fetching Resend account info (lightweight API call)
-  try {
-    const resend = new Resend(api_key);
-    const { data, error } = await resend.domains.list();
-    if (error || !data) throw new Error((error as { message?: string } | null)?.message || 'Invalid API key');
-  } catch (err) {
-    return NextResponse.json(
-      { error: 'Invalid Resend API key', details: (err as Error).message },
-      { status: 400 }
-    );
+  // Basic format validation — Resend keys start with 're_'
+  // We skip a live API call because sending-only keys can't call management endpoints.
+  // The key will be validated on first actual email send (markIntegrationError flags failures).
+  if (!api_key.startsWith('re_')) {
+    return NextResponse.json({ error: 'Invalid API key format — Resend keys start with re_' }, { status: 400 });
   }
 
-  await saveIntegration('resend', { api_key, contact_email }, 'connected');
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(contact_email)) {
+    return NextResponse.json({ error: 'Invalid contact email address' }, { status: 400 });
+  }
+
+  try {
+    await saveIntegration('resend', { api_key, contact_email }, 'connected');
+  } catch (err) {
+    return NextResponse.json(
+      { error: 'Failed to save integration', details: (err as Error).message },
+      { status: 500 }
+    );
+  }
   return NextResponse.json({ success: true });
 }
