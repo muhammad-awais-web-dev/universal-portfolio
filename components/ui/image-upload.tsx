@@ -130,6 +130,8 @@ export function ImageUpload({
     setError(null);
   };
 
+  const isSquare = aspectRatio === '1:1';
+
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Hidden file input */}
@@ -142,14 +144,14 @@ export function ImageUpload({
       />
 
       {/* Image Preview */}
-      <div className="relative w-full h-64 bg-muted/30 rounded-lg overflow-hidden border-2 border-dashed border-gray-300">
+      <div className={`relative w-full bg-muted rounded-lg overflow-hidden border-2 border-dashed border-gray-300 ${isSquare ? 'aspect-square' : 'h-64'}`}>
         {preview ? (
           <>
             <Image
               src={preview}
               alt="Preview"
               fill
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
               unoptimized
             />
             {/* Delete button overlay */}
