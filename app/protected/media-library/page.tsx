@@ -27,7 +27,16 @@ interface CloudinaryImage {
   created_at: string;
 }
 
-const FOLDERS = ['bio', 'projects', 'certifications', 'testimonials', 'settings', 'skills'];
+const FOLDERS = [
+  'portfolio/avatars',
+  'portfolio/projects',
+  'portfolio/projects/gallery',
+  'portfolio/skills',
+  'portfolio/certifications',
+  'portfolio/certifications/gallery',
+  'portfolio/testimonials',
+  'settings',
+];
 
 export default function MediaLibraryPage() {
   const [images, setImages] = useState<CloudinaryImage[]>([]);
@@ -93,9 +102,14 @@ export default function MediaLibraryPage() {
     }
   };
 
-  const activeFolders = Array.from(
-    new Set(images.map((img) => img.public_id.split('/')[0]))
-  ).sort();
+  // Derive active folders from known folder list (those that have images)
+  const activeFolders = FOLDERS.filter((folder) =>
+    images.some((img) => img.public_id.startsWith(folder + '/'))
+  );
+
+  // Label: strip leading 'portfolio/' for display
+  const folderLabel = (f: string) =>
+    f.startsWith('portfolio/') ? f.slice('portfolio/'.length) : f;
 
   const filtered = images.filter((img) => {
     const matchesFolder =
@@ -143,7 +157,7 @@ export default function MediaLibraryPage() {
                     : 'bg-muted text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {folder} ({count})
+                {folderLabel(folder)} ({count})
               </button>
             );
           })}
@@ -186,7 +200,9 @@ export default function MediaLibraryPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           {filtered.map((image) => {
             const filename = image.public_id.split('/').pop() ?? image.public_id;
-            const folder = image.public_id.split('/')[0];
+            // Find the known folder this image belongs to, strip 'portfolio/' prefix for display
+            const matchedFolder = FOLDERS.find((f) => image.public_id.startsWith(f + '/')) ?? '';
+            const folderBadge = folderLabel(matchedFolder) || image.public_id.split('/')[0];
             const isCopied = copied === image.secure_url;
             const isDeleting = deleting === image.public_id;
 
@@ -203,7 +219,7 @@ export default function MediaLibraryPage() {
                   />
                   <div className="absolute top-1.5 left-1.5">
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0 capitalize opacity-90">
-                      {folder}
+                      {folderBadge}
                     </Badge>
                   </div>
                 </div>
