@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useAdminSession } from '@/lib/hooks/useAdminSession';
 import { useAdminProfile } from '@/lib/hooks/useAdminProfile';
 import { AdminSidebar } from '@/components/admin/admin-sidebar';
@@ -10,6 +10,7 @@ import { GitHubPromoBanner } from '@/components/github-promo-banner';
 function AdminShell({ children }: { children: React.ReactNode }) {
   const { isLoggedIn, isChecking, logout } = useAdminSession();
   const { profile } = useAdminProfile(isLoggedIn);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // While checking auth or not logged in, render children directly (login page)
   if (isChecking || !isLoggedIn) {
@@ -28,15 +29,20 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   // Logged in: full sidebar layout
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Left sidebar */}
+      {/* Sidebar — hidden on mobile unless open */}
       <Suspense fallback={null}>
-        <AdminSidebar profile={profile} onLogout={logout} />
+        <AdminSidebar
+          profile={profile}
+          onLogout={logout}
+          mobileOpen={mobileMenuOpen}
+          onMobileClose={() => setMobileMenuOpen(false)}
+        />
       </Suspense>
 
       {/* Right: top bar + scrollable content */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Suspense fallback={<div className="h-14 border-b shrink-0" />}>
-          <AdminTopBar />
+          <AdminTopBar onMenuToggle={() => setMobileMenuOpen((o) => !o)} />
         </Suspense>
         <main className="flex-1 overflow-y-auto p-6">
           {children}
