@@ -116,3 +116,58 @@ function StoredBadge({ status }: { status: string }) {
   return <Badge variant="secondary" className="text-xs gap-1"><XCircle className="h-2.5 w-2.5" />Not connected</Badge>;
 }
 
+export default function DashboardPage() {
+  const [integrations, setIntegrations] = useState<IntegrationPublic[]>([]);
+  const [loadingIntegrations, setLoadingIntegrations] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/integrations')
+      .then((r) => r.json())
+      .then((d) => setIntegrations(d.integrations ?? []))
+      .finally(() => setLoadingIntegrations(false));
+  }, []);
+
+  const get = (key: string) => integrations.find((i) => i.key === key);
+
+  return (
+    <div className="space-y-6 max-w-4xl">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Dashboard</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">System health and integration status</p>
+        </div>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/protected/integrations" className="gap-2">
+            <Settings2 className="h-4 w-4" />Manage integrations
+          </Link>
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <SupabaseCard />
+        {loadingIntegrations ? (
+          <>
+            <Card><CardContent className="flex items-center justify-center h-24"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></CardContent></Card>
+            <Card><CardContent className="flex items-center justify-center h-24"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></CardContent></Card>
+          </>
+        ) : (
+          <>
+            <IntegrationCard
+              label="Cloudinary" description="Image storage & CDN"
+              icon={Cloud}
+              integration={get('cloudinary')}
+              retestUrl="/api/integrations/cloudinary/revalidate"
+            />
+            <IntegrationCard
+              label="Resend" description="Email delivery"
+              icon={Mail}
+              integration={get('resend')}
+              retestUrl="/api/integrations/resend/revalidate"
+            />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
