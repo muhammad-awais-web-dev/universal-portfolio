@@ -31,10 +31,15 @@ export async function getIntegration(key: IntegrationKey): Promise<Integration |
       .select('*')
       .eq('key', key)
       .single();
-    if (error || !data) return null;
+    // PGRST116 = "no rows returned" — table exists but no record
+    if (error?.code === 'PGRST116') return null;
+    // Any other error (e.g. table doesn't exist) — throw so callers know DB is unavailable
+    if (error) throw error;
+    if (!data) return null;
     return data as Integration;
-  } catch {
-    return null;
+  } catch (err) {
+    // Re-throw so getCloudinaryConfig/getResendConfig can decide to env-fallback
+    throw err;
   }
 }
 
