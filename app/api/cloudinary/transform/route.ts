@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 import { requireAuth } from '@/lib/auth/api-guard';
-
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import { getCloudinaryConfig } from '@/lib/integrations/cloudinary-config';
 
 export async function POST(request: NextRequest) {
-  // Require authentication
   const authError = await requireAuth();
   if (authError) return authError;
+
+  const cfg = await getCloudinaryConfig();
+  if (!cfg) return NextResponse.json({ error: 'Cloudinary is not configured' }, { status: 503 });
+  cloudinary.config({ cloud_name: cfg.cloud_name, api_key: cfg.api_key, api_secret: cfg.api_secret });
 
   try {
     const { publicId, transformations } = await request.json();

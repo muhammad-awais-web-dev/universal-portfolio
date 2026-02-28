@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { Resend } from 'resend';
 import { verifySession } from '@/lib/auth/session';
-import { isEmailConfigured, getResendApiKey, getContactEmail } from '@/lib/utils/email-config';
+import { getResendConfig } from '@/lib/integrations/resend-config';
+import { markIntegrationError } from '@/lib/integrations/repository';
 
 /**
  * GET /api/test-email
@@ -19,18 +20,19 @@ export async function GET(_request: NextRequest) {
   }
 
   try {
-    if (!isEmailConfigured()) {
+    const resendCfg = await getResendConfig();
+    if (!resendCfg) {
       return NextResponse.json(
         { 
           error: 'Email not configured',
-          message: 'RESEND_API_KEY or CONTACT_EMAIL environment variables are missing'
+          message: 'Resend credentials not found in database or environment variables'
         },
         { status: 500 }
       );
     }
 
-    const resend = new Resend(getResendApiKey()!);
-    const contactEmail = getContactEmail()!;
+    const resend = new Resend(resendCfg.api_key);
+    const contactEmail = resendCfg.contact_email;
 
     const { data, error } = await resend.emails.send({
       from: 'Portfolio Test <onboarding@resend.dev>',
@@ -123,6 +125,7 @@ export async function GET(_request: NextRequest) {
     });
 
     if (error) {
+      markIntegrationError('resend', error.message || 'Failed to send test email');
       return NextResponse.json(
         { 
           error: 'Failed to send test email',
