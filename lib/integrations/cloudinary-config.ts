@@ -3,16 +3,23 @@ import type { CloudinaryConfig } from './types';
 
 /**
  * Get Cloudinary credentials — DB first, env vars fallback.
- * If a DB record exists (even disconnected), env vars are NOT used —
- * a disconnected status means the user explicitly disabled it.
- * Env vars are only used when there is no DB record at all.
+ * - DB record exists with status=connected → use DB creds
+ * - DB record exists with status=disconnected → return null (user explicitly disconnected)
+ * - No DB record (table exists, no row) → fall back to env vars
+ * - DB unavailable (table missing / network error) → fall back to env vars
  */
 export async function getCloudinaryConfig(): Promise<CloudinaryConfig | null> {
-  // Try DB first
-  const integration = await getIntegration('cloudinary');
-  if (integration) {
-    // DB record exists — respect its status; do NOT fall back to env vars
-    if (integration.status === 'disconnected') return null;
+  let integration: Awaited<ReturnType<typeof getIntegration>> | undefined;
+  try {
+    integration = await getIntegration('cloudinary');
+  } catch {
+    // DB unavailable (migration not run, etc.) — fall back to env vars
+    integration = undefined;
+  }
+
+  if (integration !== undefined) {
+    // DB record exists — honour it exclusively (no env fallback)
+    if (integration === null || integration.status === 'disconnected') return null;
     const cfg = integration.config as Partial<CloudinaryConfig>;
     if (cfg.cloud_name && cfg.api_key && cfg.api_secret) {
       return cfg as CloudinaryConfig;
@@ -20,11 +27,10 @@ export async function getCloudinaryConfig(): Promise<CloudinaryConfig | null> {
     return null;
   }
 
-  // No DB record at all — fall back to env vars
+  // DB unavailable — fall back to env vars
   const cloud_name = process.env.CLOUDINARY_CLOUD_NAME;
   const api_key = process.env.CLOUDINARY_API_KEY;
   const api_secret = process.env.CLOUDINARY_API_SECRET;
-
   if (cloud_name && api_key && api_secret) {
     return { cloud_name, api_key, api_secret };
   }
