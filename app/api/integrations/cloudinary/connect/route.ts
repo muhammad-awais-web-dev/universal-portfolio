@@ -18,7 +18,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'cloud_name, api_key, and api_secret are required' }, { status: 400 });
   }
 
-  // Validate by listing a folder (lightweight call)
   try {
     cloudinary.config({ cloud_name, api_key, api_secret });
     await cloudinary.api.ping();
@@ -29,6 +28,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  await saveIntegration('cloudinary', { cloud_name, api_key, api_secret }, 'connected');
+  try {
+    await saveIntegration('cloudinary', { cloud_name, api_key, api_secret }, 'connected');
+  } catch (err) {
+    return NextResponse.json(
+      { error: 'Failed to save integration', details: (err as Error).message },
+      { status: 500 }
+    );
+  }
   return NextResponse.json({ success: true });
 }
