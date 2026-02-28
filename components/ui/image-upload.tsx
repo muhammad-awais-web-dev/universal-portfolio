@@ -44,13 +44,11 @@ export function ImageUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       setError('Please select an image file');
       return;
     }
 
-    // Validate file size
     if (file.size > maxSize * 1024 * 1024) {
       setError(`File size must be less than ${maxSize}MB`);
       return;
@@ -61,46 +59,57 @@ export function ImageUpload({
     setUploadProgress(0);
 
     try {
-      // Create FormData for upload
+      const timestamp = Math.floor(Date.now() / 1000);
+      const publicId = publicIdPrefix ? `${publicIdPrefix}_${timestamp}` : undefined;
+
+      // Build params to sign
+      const paramsToSign: Record<string, string | number> = { timestamp, folder };
+      if (publicId) paramsToSign.public_id = publicId;
+
+      // Get signature from server (also validates Cloudinary is connected)
+      const signRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paramsToSign }),
+      });
+
+      if (!signRes.ok) {
+        const err = await signRes.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error || 'Cloudinary is not connected');
+      }
+
+      const { signature, cloud_name, api_key } = await signRes.json() as {
+        signature: string;
+        cloud_name: string;
+        api_key: string;
+      };
+
+      // Signed upload directly to Cloudinary
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('upload_preset', 'portfolio_upload');
+      formData.append('api_key', api_key);
+      formData.append('timestamp', String(timestamp));
+      formData.append('signature', signature);
       formData.append('folder', folder);
-      
-      // Add custom public_id if prefix is provided
-      if (publicIdPrefix) {
-        const timestamp = Date.now();
-        const publicId = `${publicIdPrefix}_${timestamp}`;
-        formData.append('public_id', publicId);
-      }
+      if (publicId) formData.append('public_id', publicId);
 
-      // Upload to Cloudinary
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-        {
-          method: 'POST',
-          body: formData,
-        }
+      const uploadRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`,
+        { method: 'POST', body: formData }
       );
 
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
+      if (!uploadRes.ok) throw new Error('Upload failed');
 
-      const data = await response.json();
-      
-      // Update preview and call onChange
+      const data = await uploadRes.json() as { secure_url: string; public_id: string };
       setPreview(data.secure_url);
       onChange(data.secure_url, data.public_id);
       setUploadProgress(100);
     } catch (err) {
       console.error('Upload error:', err);
-      setError('Failed to upload image. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to upload image. Please try again.');
     } finally {
       setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 

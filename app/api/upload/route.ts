@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     const signature = cloudinary.utils.api_sign_request(paramsToSign, cfg.api_secret);
 
-    return NextResponse.json({ signature });
+    return NextResponse.json({ signature, cloud_name: cfg.cloud_name, api_key: cfg.api_key });
   } catch (error) {
     console.error('Error generating signature:', error);
     return NextResponse.json(
