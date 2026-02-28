@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CheckCircle, XCircle, AlertCircle, Plug, PlugZap, Unplug } from 'lucide-react';
-import type { IntegrationPublic } from '@/lib/integrations/types';
+import { Loader2, CheckCircle, XCircle, AlertCircle, Plug, PlugZap, Unplug, Github } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import type { IntegrationPublic, GitHubConfig } from '@/lib/integrations/types';
 
 type Status = 'connected' | 'disconnected' | 'error';
 
@@ -279,6 +280,167 @@ function ResendCard({ integration, onRefresh }: { integration: IntegrationPublic
   );
 }
 
+// ─── GitHub Card ──────────────────────────────────────────────────────────────
+function GitHubCard({ integration, onRefresh }: { integration: IntegrationPublic | null; onRefresh: () => void }) {
+  const [form, setForm] = useState({ username: '', token: '', repo: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [togglingFeature, setTogglingFeature] = useState<string | null>(null);
+  const status: Status = integration?.status ?? 'disconnected';
+
+  const cfg = integration?.masked as unknown as Partial<GitHubConfig> | undefined;
+
+  const handleConnect = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/integrations/github/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, show_commit_chart: true, show_top_languages: true, show_contribution_graph: true, show_pinned_repos: true, show_stats: true }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.details || data.error || 'Connection failed');
+      onRefresh();
+      setForm({ username: '', token: '', repo: '' });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    setLoading(true);
+    try {
+      await fetch('/api/integrations/github', { method: 'DELETE' });
+      onRefresh();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRetest = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/integrations/github/revalidate', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) setError(data.error || 'Revalidation failed');
+      onRefresh();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleFeature = async (feature: keyof Pick<GitHubConfig, 'show_commit_chart' | 'show_top_languages' | 'show_contribution_graph' | 'show_pinned_repos' | 'show_stats'>, value: boolean) => {
+    setTogglingFeature(feature);
+    try {
+      await fetch('/api/integrations/github/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [feature]: value }),
+      });
+      onRefresh();
+    } finally {
+      setTogglingFeature(null);
+    }
+  };
+
+  const features: { key: keyof Pick<GitHubConfig, 'show_commit_chart' | 'show_top_languages' | 'show_contribution_graph' | 'show_pinned_repos' | 'show_stats'>; label: string; desc: string }[] = [
+    { key: 'show_commit_chart', label: 'Commit Activity Chart', desc: 'Weekly commit frequency bar chart' },
+    { key: 'show_top_languages', label: 'Top Languages', desc: 'Most-used programming languages' },
+    { key: 'show_contribution_graph', label: 'Contribution Graph', desc: 'GitHub-style heatmap calendar' },
+    { key: 'show_pinned_repos', label: 'Pinned Repositories', desc: 'Showcase pinned GitHub repos' },
+    { key: 'show_stats', label: 'GitHub Stats', desc: 'Stars, forks, followers overview' },
+  ];
+
+  return (
+    <Card className="md:col-span-2">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Github className="w-8 h-8" />
+            <div>
+              <CardTitle className="text-base">GitHub</CardTitle>
+              <CardDescription className="text-xs">Show GitHub activity and stats on your portfolio</CardDescription>
+            </div>
+          </div>
+          <StatusBadge status={status} />
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {status === 'connected' && cfg && (
+          <>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p><span className="font-medium text-foreground">Username:</span> {cfg.username}</p>
+              {cfg.repo && <p><span className="font-medium text-foreground">Repo:</span> {cfg.repo}</p>}
+              {cfg.token && <p><span className="font-medium text-foreground">Token:</span> {cfg.token}</p>}
+            </div>
+
+            {/* Feature toggles */}
+            <div className="border rounded-lg divide-y">
+              {features.map(({ key, label, desc }) => (
+                <div key={key} className="flex items-center justify-between px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium">{label}</p>
+                    <p className="text-xs text-muted-foreground">{desc}</p>
+                  </div>
+                  <Switch
+                    checked={(cfg as unknown as GitHubConfig)[key] ?? true}
+                    onCheckedChange={(v) => handleToggleFeature(key, v)}
+                    disabled={togglingFeature === key}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <Button size="sm" variant="outline" onClick={handleRetest} disabled={loading}>
+                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <PlugZap className="h-4 w-4 mr-2" />}
+                Re-test
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleDisconnect} disabled={loading} className="text-destructive hover:text-destructive">
+                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Unplug className="h-4 w-4 mr-2" />}
+                Disconnect
+              </Button>
+            </div>
+          </>
+        )}
+
+        {status === 'error' && (
+          <Alert variant="destructive" className="py-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-xs">{integration?.error_message}</AlertDescription>
+          </Alert>
+        )}
+
+        {(status === 'disconnected' || status === 'error') && (
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">GitHub Username *</Label>
+              <Input placeholder="your-username" value={form.username} onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))} className="h-8 text-sm" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Personal Access Token <span className="text-muted-foreground">(optional — for private repos &amp; higher rate limits)</span></Label>
+              <Input type="password" placeholder="ghp_xxxxxxxxxxxx" value={form.token} onChange={(e) => setForm((f) => ({ ...f, token: e.target.value }))} className="h-8 text-sm" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Default Repository <span className="text-muted-foreground">(optional)</span></Label>
+              <Input placeholder="my-portfolio-repo" value={form.repo} onChange={(e) => setForm((f) => ({ ...f, repo: e.target.value }))} className="h-8 text-sm" />
+            </div>
+            {error && <p className="text-xs text-destructive">{error}</p>}
+            <Button size="sm" onClick={handleConnect} disabled={loading || !form.username} className="w-full">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plug className="h-4 w-4 mr-2" />}
+              Connect GitHub
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function IntegrationsPage() {
   const [integrations, setIntegrations] = useState<IntegrationPublic[]>([]);
@@ -314,13 +476,13 @@ export default function IntegrationsPage() {
         <h1 className="text-2xl font-bold">Integrations</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Connect third-party services. Credentials are stored securely in the database.
-          Env variables are used as fallback if no database credential is set.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <CloudinaryCard integration={get('cloudinary')} onRefresh={load} />
         <ResendCard integration={get('resend')} onRefresh={load} />
+        <GitHubCard integration={get('github')} onRefresh={load} />
       </div>
     </div>
   );
