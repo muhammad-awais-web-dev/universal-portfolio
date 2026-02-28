@@ -15,7 +15,7 @@ interface LogoDisplayProps {
 
 export function LogoDisplay({ logo, fallbackText = 'Portfolio', className = '' }: LogoDisplayProps) {
   const px = SIZE_MAP[logo.size ?? 'md'];
-  const imgClass = `shrink-0 object-cover ${STYLE_MAP[logo.style ?? 'rounded']}`;
+  const imgClass = `shrink-0 object-contain ${STYLE_MAP[logo.style ?? 'rounded']}`;
   const text = logo.text ?? fallbackText;
   const showImage = !!logo.url && logo.layout !== 'text-only';
   const showText = logo.layout !== 'image-only';

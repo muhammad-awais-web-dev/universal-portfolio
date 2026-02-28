@@ -484,7 +484,7 @@ export function ProjectForm() {
                       alt={project.title}
                       width={96}
                       height={96}
-                      className="w-24 h-24 object-cover rounded"
+                      className="w-24 h-24 object-contain rounded"
                       unoptimized
                     />
                   )}

@@ -166,7 +166,7 @@ export function ProjectsPageClient() {
                       src={project.featured_image}
                       alt={project.title}
                       fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="object-contain group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
 

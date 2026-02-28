@@ -263,7 +263,7 @@ export function BioForm() {
                     alt={profile.full_name || "Avatar"}
                     width={128}
                     height={128}
-                    className="w-32 h-32 rounded-full object-cover border-4"
+                    className="w-32 h-32 rounded-full object-contain border-4"
                     unoptimized
                   />
                 </div>

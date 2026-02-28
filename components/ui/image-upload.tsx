@@ -144,7 +144,7 @@ export function ImageUpload({
       />
 
       {/* Image Preview */}
-      <div className={`relative w-full bg-muted rounded-lg overflow-hidden border-2 border-dashed border-gray-300 ${isSquare ? 'aspect-square' : 'h-64'}`}>
+      <div className={`relative bg-muted rounded-lg overflow-hidden border-2 border-dashed border-gray-300 ${isSquare ? 'w-64 h-64 mx-auto' : 'w-full h-64'}`}>
         {preview ? (
           <>
             <Image
