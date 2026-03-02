@@ -1,12 +1,10 @@
-"use client";
-
-import { useEffect, useState } from 'react';
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { NavBarWrapper } from "@/components/admin/navbar-wrapper";
 import { EnvProcessValidator } from "@/components/setup/env-process-validator";
 import { ComingSoonPage } from "@/components/coming-soon-page";
 import { PublishedPortfolio } from "@/components/portfolio/published-portfolio";
-import { useAdminSession } from "@/lib/hooks/useAdminSession";
+import { getCachedPortfolio } from '@/lib/cache/portfolio-cache';
+import { filterPublishedData } from '@/lib/utils/portfolio-helpers';
 
 interface HomePageProps {
   isAdmin: boolean;
@@ -15,17 +13,7 @@ interface HomePageProps {
   isEmailConfigured?: boolean;
 }
 
-export default function HomePage({ forceDevMode, missingVars, isEmailConfigured = false }: HomePageProps) {
-  const [mounted, setMounted] = useState(false);
-  const { isLoggedIn } = useAdminSession();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
-  const effectiveIsAdmin = isLoggedIn;
+export default async function HomePage({ forceDevMode, missingVars, isAdmin, isEmailConfigured = false }: HomePageProps) {
 
   // ── Development mode (ENVIRONMENT=development or missing critical vars) ──
   if (forceDevMode) {
@@ -56,7 +44,7 @@ export default function HomePage({ forceDevMode, missingVars, isEmailConfigured 
     }
 
     // ENVIRONMENT=development, vars are fine — visitors see Coming Soon
-    if (!effectiveIsAdmin) {
+    if (!isAdmin) {
       return <ComingSoonPage />;
     }
 
@@ -86,6 +74,8 @@ export default function HomePage({ forceDevMode, missingVars, isEmailConfigured 
   }
 
   // ── Published mode ────────────────────────────────────────────────────────
-  return <PublishedPortfolio isAdmin={effectiveIsAdmin} isEmailConfigured={isEmailConfigured} />;
+  const raw = await getCachedPortfolio();
+  const filteredData = filterPublishedData(raw, isAdmin);
+  return <PublishedPortfolio isAdmin={isAdmin} isEmailConfigured={isEmailConfigured} data={filteredData} />;
 }
 

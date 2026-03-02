@@ -1,6 +1,3 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { NavBarWrapper } from '@/components/admin/navbar-wrapper';
 import { SkillBadge } from '@/components/portfolio/skill-badge';
@@ -9,38 +6,7 @@ import { Briefcase, Calendar, MapPin } from 'lucide-react';
 import { getDateRange } from '@/lib/utils/portfolio-helpers';
 import { Experience, Skill } from '@/lib/models/portfolio';
 
-export function ExperienceClient() {
-  const [experiences, setExperiences] = useState<Experience[]>([]);
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/portfolio')
-      .then((res) => res.json())
-      .then((data) => {
-        const sorted = (data.experiences || []).sort((a: Experience, b: Experience) => {
-          if (a.is_current && !b.is_current) return -1;
-          if (!a.is_current && b.is_current) return 1;
-          return new Date(b.start_date || 0).getTime() - new Date(a.start_date || 0).getTime();
-        });
-        setExperiences(sorted);
-        setSkills(data.skills || []);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
-
-  if (loading) return (
-    <main className="min-h-screen">
-      <NavBarWrapper />
-      <div className="max-w-5xl mx-auto px-4 py-12 flex justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading experience...</p>
-        </div>
-      </div>
-    </main>
-  );
+export function ExperienceClient({ initialExperiences, initialSkills }: { initialExperiences: Experience[]; initialSkills: Skill[] }) {
 
   return (
     <main className="min-h-screen">
@@ -51,7 +17,7 @@ export function ExperienceClient() {
           <p className="text-lg text-muted-foreground">Professional work experience and career journey.</p>
         </div>
 
-        {experiences.length === 0 ? (
+        {initialExperiences.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">
             <Briefcase className="h-12 w-12 mx-auto mb-4 opacity-30" />
             <p className="text-lg">No experience entries yet.</p>
@@ -60,8 +26,8 @@ export function ExperienceClient() {
           <div className="relative">
             <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
             <div className="space-y-8">
-              {experiences.map((exp) => {
-                const expSkills = skills.filter((s) => exp.skill_ids?.includes(s.id)).slice(0, 6);
+              {initialExperiences.map((exp) => {
+                const expSkills = initialSkills.filter((s) => exp.skill_ids?.includes(s.id)).slice(0, 6);
                 return (
                   <Link key={exp.id} href={`/experience/${exp.id}`}
                     className="group flex gap-6 relative">

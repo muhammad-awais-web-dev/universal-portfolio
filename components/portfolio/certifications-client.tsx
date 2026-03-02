@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { NavBarWrapper } from '@/components/admin/navbar-wrapper';
@@ -11,40 +11,14 @@ import { formatDate } from '@/lib/utils/portfolio-helpers';
 import { Certification, Skill } from '@/lib/models/portfolio';
 import { Input } from '@/components/ui/input';
 
-export function CertificationsClient() {
-  const [certifications, setCertifications] = useState<Certification[]>([]);
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [loading, setLoading] = useState(true);
+export function CertificationsClient({ initialCertifications, initialSkills }: { initialCertifications: Certification[]; initialSkills: Skill[] }) {
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    fetch('/api/portfolio')
-      .then((res) => res.json())
-      .then((data) => {
-        setCertifications(data.certifications || []);
-        setSkills(data.skills || []);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
-
-  const filtered = certifications.filter(
+  const filtered = initialCertifications.filter(
     (c) =>
       !search ||
       c.title.toLowerCase().includes(search.toLowerCase()) ||
       c.authority?.toLowerCase().includes(search.toLowerCase())
-  );
-
-  if (loading) return (
-    <main className="min-h-screen">
-      <NavBarWrapper />
-      <div className="max-w-5xl mx-auto px-4 py-12 flex justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading certifications...</p>
-        </div>
-      </div>
-    </main>
   );
 
   return (
@@ -56,7 +30,7 @@ export function CertificationsClient() {
           <p className="text-lg text-muted-foreground">Professional certifications and credentials.</p>
         </div>
 
-        {certifications.length > 0 && (
+        {initialCertifications.length > 0 && (
           <div className="relative mb-8">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -76,7 +50,7 @@ export function CertificationsClient() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filtered.map((cert) => {
-              const certSkills = skills.filter((s) => cert.skill_ids?.includes(s.id)).slice(0, 4);
+              const certSkills = initialSkills.filter((s) => cert.skill_ids?.includes(s.id)).slice(0, 4);
               const isExpired = cert.expiration_date && new Date(cert.expiration_date) < new Date();
               return (
                 <Link key={cert.id} href={`/certifications/${cert.id}`}
