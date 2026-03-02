@@ -1,13 +1,10 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { HeroSection } from '@/components/portfolio/hero-section';
 import { ContactForm } from '@/components/portfolio/contact-form';
 import { SkillBadge } from '@/components/portfolio/skill-badge';
 import { GitHubSection } from '@/components/portfolio/github-section';
-import { PortfolioData, filterPublishedData, getDateRange, formatDate } from '@/lib/utils/portfolio-helpers';
+import { PortfolioData, getDateRange, formatDate } from '@/lib/utils/portfolio-helpers';
 import { NavBarWrapper } from '@/components/admin/navbar-wrapper';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,40 +15,10 @@ const VISIBLE_LIMIT = 6;
 interface PublishedPortfolioProps {
   isAdmin: boolean;
   isEmailConfigured?: boolean;
+  data: PortfolioData;
 }
 
-export function PublishedPortfolio({ isAdmin, isEmailConfigured = false }: PublishedPortfolioProps) {
-  const [data, setData] = useState<PortfolioData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/portfolio')
-      .then((res) => res.json())
-      .then((portfolioData) => {
-        setData(filterPublishedData(portfolioData, isAdmin));
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [isAdmin]);
-
-  if (loading) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading portfolio...</p>
-        </div>
-      </main>
-    );
-  }
-
-  if (!data) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Failed to load portfolio data.</p>
-      </main>
-    );
-  }
+export function PublishedPortfolio({ isAdmin, isEmailConfigured = false, data }: PublishedPortfolioProps) {
 
   const projects = data.projects || [];
   const experiences = data.experiences || [];

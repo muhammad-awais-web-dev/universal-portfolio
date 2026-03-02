@@ -24,6 +24,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
+export async function generateStaticParams() {
+  const data = await getCachedPortfolio();
+  return (data?.education || []).map((e) => ({ id: String(e.id) }));
+}
+
 export default async function EducationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return <EducationDetailClient id={id} />;

@@ -1,6 +1,3 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { NavBarWrapper } from '@/components/admin/navbar-wrapper';
 import { SkillBadge } from '@/components/portfolio/skill-badge';
@@ -9,39 +6,7 @@ import { GraduationCap, Calendar } from 'lucide-react';
 import { getDateRange } from '@/lib/utils/portfolio-helpers';
 import { Education, Skill } from '@/lib/models/portfolio';
 
-export function EducationClient() {
-  const [education, setEducation] = useState<Education[]>([]);
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/portfolio')
-      .then((res) => res.json())
-      .then((data) => {
-        // Sort by start_date desc (most recent first)
-        const sorted = (data.education || []).sort((a: Education, b: Education) => {
-          if (a.is_current && !b.is_current) return -1;
-          if (!a.is_current && b.is_current) return 1;
-          return new Date(b.start_date || 0).getTime() - new Date(a.start_date || 0).getTime();
-        });
-        setEducation(sorted);
-        setSkills(data.skills || []);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
-
-  if (loading) return (
-    <main className="min-h-screen">
-      <NavBarWrapper />
-      <div className="max-w-5xl mx-auto px-4 py-12 flex justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading education...</p>
-        </div>
-      </div>
-    </main>
-  );
+export function EducationClient({ initialEducation, initialSkills }: { initialEducation: Education[]; initialSkills: Skill[] }) {
 
   return (
     <main className="min-h-screen">
@@ -52,7 +17,7 @@ export function EducationClient() {
           <p className="text-lg text-muted-foreground">Academic background and achievements.</p>
         </div>
 
-        {education.length === 0 ? (
+        {initialEducation.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">
             <GraduationCap className="h-12 w-12 mx-auto mb-4 opacity-30" />
             <p className="text-lg">No education entries yet.</p>
@@ -63,8 +28,8 @@ export function EducationClient() {
             <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
 
             <div className="space-y-8">
-              {education.map((edu) => {
-                const eduSkills = skills.filter((s) => edu.skill_ids?.includes(s.id)).slice(0, 6);
+              {initialEducation.map((edu) => {
+                const eduSkills = initialSkills.filter((s) => edu.skill_ids?.includes(s.id)).slice(0, 6);
                 return (
                   <Link key={edu.id} href={`/education/${edu.id}`}
                     className="group flex gap-6 relative">

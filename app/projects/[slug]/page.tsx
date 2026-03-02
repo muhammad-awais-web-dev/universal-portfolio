@@ -33,6 +33,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
+export async function generateStaticParams() {
+  const data = await getCachedPortfolio();
+  return (data?.projects || []).map((p) => ({ slug: p.slug }));
+}
+
 export default async function ProjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const data = await getCachedPortfolio();

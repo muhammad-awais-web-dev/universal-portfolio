@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { NavBarWrapper } from '@/components/admin/navbar-wrapper';
@@ -11,62 +11,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Filter } from 'lucide-react';
 
-interface ProjectsData {
-  projects: Project[];
-  skills: Skill[];
-  projectCategories: ProjectCategory[];
-}
-
-export function ProjectsPageClient() {
-  const [data, setData] = useState<ProjectsData | null>(null);
-  const [loading, setLoading] = useState(true);
+export function ProjectsPageClient({ initialProjects, initialSkills, initialCategories }: { initialProjects: Project[]; initialSkills: Skill[]; initialCategories: ProjectCategory[] }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
 
-  useEffect(() => {
-    fetch('/api/portfolio')
-      .then((res) => res.json())
-      .then((portfolioData) => {
-        setData({
-          projects: portfolioData.projects.filter((p: Project) => p.is_published),
-          skills: portfolioData.skills,
-          projectCategories: portfolioData.projectCategories,
-        });
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error('Failed to load projects:', err);
-        setLoading(false);
-      });
-  }, []);
-
-  if (loading) {
-    return (
-      <main className="min-h-screen">
-        <NavBarWrapper />
-        <div className="max-w-7xl mx-auto px-4 py-12 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-            <p className="text-muted-foreground">Loading projects...</p>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  if (!data) {
-    return (
-      <main className="min-h-screen">
-        <NavBarWrapper />
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <p className="text-center text-muted-foreground">Failed to load projects.</p>
-        </div>
-      </main>
-    );
-  }
-
   // Filter projects
-  const filteredProjects = data.projects.filter((project) => {
+  const filteredProjects = initialProjects.filter((project) => {
     const matchesSearch =
       !searchQuery ||
       project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -79,13 +29,13 @@ export function ProjectsPageClient() {
   });
 
   // Filter categories to only show those that have projects
-  const activeCategories = data.projectCategories.filter((category) =>
-    data.projects.some((project) => project.category_ids?.includes(category.id))
+  const activeCategories = initialCategories.filter((category) =>
+    initialProjects.some((project) => project.category_ids?.includes(category.id))
   );
 
   // Count projects per category
   const categoryCounts = activeCategories.reduce((acc, category) => {
-    acc[category.id] = data.projects.filter((project) =>
+    acc[category.id] = initialProjects.filter((project) =>
       project.category_ids?.includes(category.id)
     ).length;
     return acc;
@@ -100,7 +50,7 @@ export function ProjectsPageClient() {
         <div className="mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Projects</h1>
           <p className="text-xl text-muted-foreground">
-            Explore my portfolio of {data.projects.length} project{data.projects.length !== 1 ? 's' : ''}
+            Explore my portfolio of {initialProjects.length} project{initialProjects.length !== 1 ? 's' : ''}
           </p>
         </div>
 
@@ -125,7 +75,7 @@ export function ProjectsPageClient() {
                 size="sm"
                 onClick={() => setSelectedCategory(null)}
               >
-                All Projects ({data.projects.length})
+                All Projects ({initialProjects.length})
               </Button>
               {activeCategories.map((category) => (
                 <Button
@@ -149,8 +99,8 @@ export function ProjectsPageClient() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProjects.map((project) => {
-              const projectSkills = data.skills.filter((s) => project.skill_ids?.includes(s.id));
-              const projectCategories = data.projectCategories.filter((c) =>
+              const projectSkills = initialSkills.filter((s) => project.skill_ids?.includes(s.id));
+              const projectCategories = initialCategories.filter((c) =>
                 project.category_ids?.includes(c.id)
               );
 

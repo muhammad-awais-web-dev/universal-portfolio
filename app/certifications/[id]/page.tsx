@@ -34,6 +34,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
+export async function generateStaticParams() {
+  const data = await getCachedPortfolio();
+  return (data?.certifications || []).map((c) => ({ id: String(c.id) }));
+}
+
 export default async function CertificationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return <CertificationDetailClient id={id} />;
