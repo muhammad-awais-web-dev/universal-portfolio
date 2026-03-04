@@ -134,7 +134,10 @@ The portfolio has two modes controlled in **Settings → General**:
 
 ## MCP API
 
-An external read-only API is available for integrating portfolio data into other tools (e.g. AI assistants). See [`MCP_API_DOCS.md`](./MCP_API_DOCS.md) for endpoint reference.
+An external read/write API is available for integrating portfolio data into AI tools. See [`MCP_API_DOCS.md`](./MCP_API_DOCS.md) for endpoint reference.
+
+A ready-to-use **MCP server** (for Claude Desktop, Cursor, GitHub Copilot) is available as a standalone package:
+👉 **[portfolio-mcp-server](https://github.com/muhammad-awais-web-dev/portfolio-mcp-server)** — connects any MCP-compatible AI client directly to your portfolio.
 
 ## Deployment
 
