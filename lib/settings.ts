@@ -25,10 +25,6 @@ export function checkCriticalEnvVars(): { isValid: boolean; missing: string[] } 
     'SUPABASE_URL',
     'SUPABASE_SERVICE_ROLE_KEY',
     'ADMIN_PASSPHRASE',
-    'CLOUDINARY_CLOUD_NAME',
-    'CLOUDINARY_API_KEY',
-    'CLOUDINARY_API_SECRET',
-    'NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME',
   ];
 
   const missing: string[] = [];

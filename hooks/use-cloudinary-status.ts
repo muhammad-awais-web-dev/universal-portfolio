@@ -14,8 +14,8 @@ export function useCloudinaryStatus(): CloudinaryStatus {
   useEffect(() => {
     fetch('/api/integrations')
       .then((r) => r.json())
-      .then((data: Array<{ key: string; status: string }>) => {
-        const cld = data.find((i) => i.key === 'cloudinary');
+      .then((data: { integrations: Array<{ key: string; status: string }> }) => {
+        const cld = data.integrations?.find((i) => i.key === 'cloudinary');
         setStatus(cld?.status === 'connected' ? 'connected' : 'disconnected');
       })
       .catch(() => setStatus('disconnected'));

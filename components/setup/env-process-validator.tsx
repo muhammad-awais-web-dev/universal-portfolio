@@ -129,7 +129,7 @@ export function EnvProcessValidator({ missingVars, forceDevMode }: EnvProcessVal
 
     const results: Record<string, boolean> = {};
 
-    // Initialize services
+    // Initialize services (Cloudinary added only if connected via integrations)
     const initialServices: ValidationService[] = [
       {
         id: 'supabase',
@@ -141,13 +141,6 @@ export function EnvProcessValidator({ missingVars, forceDevMode }: EnvProcessVal
       {
         id: 'admin-passphrase',
         label: 'Admin Passphrase',
-        status: 'pending',
-        isOpen: false,
-        subSteps: [],
-      },
-      {
-        id: 'cloudinary',
-        label: 'Cloudinary',
         status: 'pending',
         isOpen: false,
         subSteps: [],
@@ -338,123 +331,41 @@ export function EnvProcessValidator({ missingVars, forceDevMode }: EnvProcessVal
   }
 
   async function validateCloudinary(results: Record<string, boolean>) {
-    // Check if any Cloudinary vars are configured
-    const cloudNameCheck = await fetch('/api/setup/check-env?var=CLOUDINARY_CLOUD_NAME');
-    const cloudNameData = await cloudNameCheck.json();
-    
-    const apiKeyCheck = await fetch('/api/setup/check-env?var=CLOUDINARY_API_KEY');
-    const apiKeyData = await apiKeyCheck.json();
-    
-    const apiSecretCheck = await fetch('/api/setup/check-env?var=CLOUDINARY_API_SECRET');
-    const apiSecretData = await apiSecretCheck.json();
-
-    const hasAnyCloudinary = cloudNameData.configured || apiKeyData.configured || apiSecretData.configured;
-
-    if (!hasAnyCloudinary) {
-      // No Cloudinary configured - remove from services
-      setServices(prev => prev.filter(s => s.id !== 'cloudinary'));
-      return;
-    }
-
-    // Open Cloudinary and set to checking
-    setServices(prev => prev.map(s => 
-      s.id === 'cloudinary' ? { ...s, status: 'checking', isOpen: true } : s
-    ));
-    await sleep(300);
-
-    setServices(prev => prev.map(s => 
-      s.id === 'cloudinary' ? {
-        ...s,
-        subSteps: [{ id: 'check', label: 'Validating Cloudinary connection', status: 'checking' }]
-      } : s
-    ));
-    await sleep(800);
-
-    // Check which vars are missing
-    const missingVars: string[] = [];
-    if (!cloudNameData.configured) missingVars.push('CLOUDINARY_CLOUD_NAME');
-    if (!apiKeyData.configured) missingVars.push('CLOUDINARY_API_KEY');
-    if (!apiSecretData.configured) missingVars.push('CLOUDINARY_API_SECRET');
-
-    results.cloudinaryUrl = cloudNameData.configured;
-
-    // If vars are missing, show error
-    if (missingVars.length > 0) {
-      results.cloudinaryConnection = false;
-      setServices(prev => prev.map(s => 
-        s.id === 'cloudinary' ? {
-          ...s,
-          subSteps: s.subSteps.map(sub => ({
-            ...sub,
-            label: 'Cloudinary Connection',
-            status: 'error',
-            message: 'Configuration incomplete'
-          })),
-          status: 'error',
-          isOpen: true,
-          errorMessage: `Missing environment variables: ${missingVars.join(', ')}`,
-          fixInstructions: 'Go to Cloudinary Dashboard (console.cloudinary.com) → Account Details. Copy your Cloud Name, API Key, and API Secret, then add them to your .env.local file:\n\nCLOUDINARY_CLOUD_NAME=your-cloud-name\nCLOUDINARY_API_KEY=your-api-key\nCLOUDINARY_API_SECRET=your-api-secret\nNEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your-cloud-name',
-        } : s
-      ));
-      return;
-    }
-
-    // Try to validate the connection
+    // Cloudinary is managed via Supabase integrations — check the integration status
     try {
-      const cloudinaryConnectionCheck = await fetch('/api/setup/validate-cloudinary');
-      const cloudinaryConnectionData = await cloudinaryConnectionCheck.json();
-      results.cloudinaryConnection = cloudinaryConnectionData.valid;
-
-      if (cloudinaryConnectionData.valid) {
-        // Success - close dropdown
-        setServices(prev => prev.map(s => 
-          s.id === 'cloudinary' ? {
-            ...s,
-            subSteps: s.subSteps.map(sub => ({
-              ...sub,
-              label: 'Cloudinary Connection',
-              status: 'success',
-              message: 'Connected successfully'
-            })),
-            status: 'success',
-            isOpen: false,
-          } : s
-        ));
-      } else {
-        // Connection failed
-        setServices(prev => prev.map(s => 
-          s.id === 'cloudinary' ? {
-            ...s,
-            subSteps: s.subSteps.map(sub => ({
-              ...sub,
-              label: 'Cloudinary Connection',
-              status: 'error',
-              message: 'Connection failed'
-            })),
-            status: 'error',
-            isOpen: true,
-            errorMessage: 'Unable to connect to Cloudinary',
-            fixInstructions: 'Please verify your Cloudinary credentials are correct. Check your Cloudinary account dashboard to ensure the Cloud Name, API Key, and API Secret match.',
-          } : s
-        ));
+      const integrationCheck = await fetch('/api/integrations/cloudinary');
+      if (!integrationCheck.ok) {
+        results.cloudinaryUrl = false;
+        results.cloudinaryConnection = false;
+        return;
       }
+
+      const integrationData = await integrationCheck.json();
+      const isConnected = integrationData.status === 'connected';
+
+      if (!isConnected) {
+        results.cloudinaryUrl = false;
+        results.cloudinaryConnection = false;
+        return;
+      }
+
+      // Connected via integrations — add and show success
+      setServices(prev => [
+        ...prev,
+        {
+          id: 'cloudinary',
+          label: 'Cloudinary',
+          status: 'success' as const,
+          isOpen: false,
+          subSteps: [],
+          message: 'Connected via Integrations',
+        },
+      ]);
+      results.cloudinaryUrl = true;
+      results.cloudinaryConnection = true;
     } catch {
+      results.cloudinaryUrl = false;
       results.cloudinaryConnection = false;
-      setServices(prev => prev.map(s => 
-        s.id === 'cloudinary' ? {
-          ...s,
-          subSteps: s.subSteps.map(sub => ({
-            ...sub,
-            label: 'Cloudinary Connection',
-            status: 'error',
-            message: 'Connection error'
-          })),
-          status: 'error',
-          isOpen: true,
-          errorMessage: 'Connection error occurred',
-          fixInstructions: 'Failed to connect to Cloudinary. Check your internet connection and verify your credentials.',
-        } : s
-      ));
     }
   }
 

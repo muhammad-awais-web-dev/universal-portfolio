@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { verifySession } from "@/lib/auth/session";
 import { checkCriticalEnvVars } from "@/lib/settings";
-import { isEmailConfigured } from "@/lib/utils/email-config";
+import { isResendConfigured } from "@/lib/integrations/resend-config";
 import { getLiveSetting } from "@/lib/settings/live";
 import HomePage from "@/components/home-page";
 
@@ -26,7 +26,7 @@ async function HomeContent() {
       isAdmin={isAdmin} 
       forceDevMode={forceDevMode} 
       missingVars={missingVars}
-      isEmailConfigured={isEmailConfigured()}
+      isEmailConfigured={await isResendConfigured()}
     />
   );
 }

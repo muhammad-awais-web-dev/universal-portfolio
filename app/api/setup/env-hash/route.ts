@@ -13,8 +13,6 @@ export async function GET(_request: NextRequest) {
       process.env.SUPABASE_URL || '',
       process.env.SUPABASE_SERVICE_ROLE_KEY || '',
       process.env.ADMIN_PASSPHRASE || '',
-      process.env.CLOUDINARY_CLOUD_NAME || '',
-      process.env.CLOUDINARY_API_KEY || '',
     ].join('|');
 
     const hash = crypto.createHash('sha256').update(envString).digest('hex');
