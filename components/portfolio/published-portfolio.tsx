@@ -9,6 +9,7 @@ import { NavBarWrapper } from '@/components/admin/navbar-wrapper';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Calendar, MapPin } from 'lucide-react';
+import { TestimonialsSection } from '@/components/portfolio/testimonials-section';
 
 const VISIBLE_LIMIT = 6;
 
@@ -207,31 +208,7 @@ export function PublishedPortfolio({ isAdmin, isEmailConfigured = false, data }:
                   <p className="text-sm text-muted-foreground mt-1">{testimonials.length} {testimonials.length === 1 ? 'testimonial' : 'testimonials'}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {testimonials.map((t) => (
-                  <div key={t.id} className="border rounded-lg p-5 bg-card flex flex-col gap-3">
-                    <p className="text-sm text-muted-foreground leading-relaxed flex-1 italic">&ldquo;{t.comment}&rdquo;</p>
-                    <div className="flex items-center gap-3 pt-2 border-t">
-                      {t.image_url ? (
-                        <Image src={t.image_url} alt={t.name} width={36} height={36} className="rounded-full object-contain shrink-0" />
-                      ) : (
-                        <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0 text-sm font-semibold">
-                          {t.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <p className="font-semibold text-sm truncate">{t.name}</p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {t.position}{t.company ? `, ${t.company}` : ''}
-                        </p>
-                      </div>
-                      {t.platform_name && (
-                        <span className="ml-auto shrink-0 text-xs text-muted-foreground">{t.platform_name}</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <TestimonialsSection testimonials={testimonials} />
             </div>
           </section>
         )}
