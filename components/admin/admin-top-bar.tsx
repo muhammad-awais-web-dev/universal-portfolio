@@ -5,6 +5,7 @@ import { ThemeSwitcher } from '@/components/theme-switcher';
 import Link from 'next/link';
 import { ExternalLink, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AdminSearch } from '@/components/admin/admin-search';
 
 // Map routes + params → human-readable page titles
 function usePageTitle(): string {
@@ -13,6 +14,7 @@ function usePageTitle(): string {
 
   if (pathname === '/protected' || pathname === '/protected/') return 'Dashboard';
   if (pathname === '/protected/media-library') return 'Media Library';
+  if (pathname === '/protected/docs') return 'Documentation';
 
   if (pathname === '/protected/manage') {
     const section = searchParams.get('section') || 'bio';
@@ -61,6 +63,7 @@ export function AdminTopBar({ onMenuToggle }: { onMenuToggle?: () => void }) {
         <h1 className="text-sm font-semibold text-foreground">{title}</h1>
       </div>
       <div className="flex items-center gap-2">
+        <AdminSearch />
         <Link
           href="/"
           target="_blank"

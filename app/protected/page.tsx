@@ -10,7 +10,7 @@ import {
   Database, Cloud, Mail, RefreshCw, CheckCircle2, XCircle, Loader2,
   AlertCircle, Settings2, FolderKanban, Briefcase, GraduationCap,
   Award, MessageSquare, Wrench, ImageIcon, Plug, Github,
-  Star, BookOpen, AlertTriangle, Plus, ArrowRight,
+  Star, BookOpen, AlertTriangle, Plus, ArrowRight, Rocket,
 } from 'lucide-react';
 import type { IntegrationPublic } from '@/lib/integrations/types';
 import type { GitHubStats } from '@/app/api/github/route';
@@ -225,16 +225,16 @@ export default function DashboardPage() {
   const get = (key: string) => integrations.find((i) => i.key === key);
 
   const statItems = portfolioStats ? [
-    { icon: FolderKanban, label: 'Projects', value: portfolioStats.projects, href: '/protected/projects' },
-    { icon: Wrench, label: 'Skills', value: portfolioStats.skills, href: '/protected/skills' },
-    { icon: Briefcase, label: 'Experience', value: portfolioStats.experiences, href: '/protected/experience' },
-    { icon: GraduationCap, label: 'Education', value: portfolioStats.education, href: '/protected/education' },
-    { icon: Award, label: 'Certifications', value: portfolioStats.certifications, href: '/protected/certifications' },
-    { icon: MessageSquare, label: 'Testimonials', value: portfolioStats.testimonials, href: '/protected/testimonials' },
+    { icon: FolderKanban, label: 'Projects', value: portfolioStats.projects, href: '/protected/manage?section=projects' },
+    { icon: Wrench, label: 'Skills', value: portfolioStats.skills, href: '/protected/manage?section=skills' },
+    { icon: Briefcase, label: 'Experience', value: portfolioStats.experiences, href: '/protected/manage?section=experience' },
+    { icon: GraduationCap, label: 'Education', value: portfolioStats.education, href: '/protected/manage?section=education' },
+    { icon: Award, label: 'Certifications', value: portfolioStats.certifications, href: '/protected/manage?section=certifications' },
+    { icon: MessageSquare, label: 'Testimonials', value: portfolioStats.testimonials, href: '/protected/manage?section=testimonials' },
   ] : [];
 
   const quickLinks = [
-    { icon: Plus, label: 'New Project', href: '/protected/projects/new', color: 'text-blue-500' },
+    { icon: Plus, label: 'New Project', href: '/protected/manage?section=projects', color: 'text-blue-500' },
     { icon: ImageIcon, label: 'Media Library', href: '/protected/media-library', color: 'text-purple-500' },
     { icon: Plug, label: 'Integrations', href: '/protected/integrations', color: 'text-green-500' },
     { icon: Settings2, label: 'Settings', href: '/protected/settings', color: 'text-orange-500' },
@@ -242,10 +242,18 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 max-w-5xl">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold">Dashboard</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">System health, portfolio stats and quick actions</p>
+      {/* Header + Get Started */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="text-2xl font-bold">Dashboard</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Portfolio stats, quick actions, and system health</p>
+        </div>
+        <Link href="/protected/docs?section=getting-started">
+          <Button className="gap-2 shrink-0" variant="outline">
+            <Rocket className="h-4 w-4" />
+            Get Started
+          </Button>
+        </Link>
       </div>
 
       {/* Pending migrations warning */}
@@ -265,28 +273,27 @@ export default function DashboardPage() {
         </Alert>
       )}
 
-      {/* Service connections */}
+      {/* Quick Actions */}
       <div>
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Services</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <SupabaseCard />
-          {loadingIntegrations ? (
-            Array.from({ length: 3 }).map((_, i) => (
-              <Card key={i}><CardContent className="flex items-center justify-center h-24"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></CardContent></Card>
-            ))
-          ) : (
-            <>
-              <IntegrationCard label="Cloudinary" description="Image storage & CDN" icon={Cloud} integration={get('cloudinary')} retestUrl="/api/integrations/cloudinary/revalidate" />
-              <IntegrationCard label="Resend" description="Email delivery" icon={Mail} integration={get('resend')} retestUrl="/api/integrations/resend/revalidate" />
-              <GitHubCard integration={get('github')} />
-            </>
-          )}
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Actions</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {quickLinks.map(({ icon: Icon, label, href, color }) => (
+            <Link key={label} href={href}>
+              <Card className="hover:bg-muted/40 transition-colors cursor-pointer">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <Icon className={`h-5 w-5 shrink-0 ${color}`} />
+                  <span className="text-sm font-medium">{label}</span>
+                  <ArrowRight className="h-3.5 w-3.5 ml-auto text-muted-foreground" />
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
         </div>
       </div>
 
-      {/* Portfolio stats */}
+      {/* Portfolio Content */}
       <div>
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Portfolio Content</h3>
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Content</h3>
         {portfolioStats ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {statItems.map(({ icon: Icon, label, value, href }) => (
@@ -310,21 +317,22 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Quick links */}
+      {/* Services */}
       <div>
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Actions</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {quickLinks.map(({ icon: Icon, label, href, color }) => (
-            <Link key={label} href={href}>
-              <Card className="hover:bg-muted/40 transition-colors cursor-pointer">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <Icon className={`h-5 w-5 shrink-0 ${color}`} />
-                  <span className="text-sm font-medium">{label}</span>
-                  <ArrowRight className="h-3.5 w-3.5 ml-auto text-muted-foreground" />
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Services</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <SupabaseCard />
+          {loadingIntegrations ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i}><CardContent className="flex items-center justify-center h-24"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></CardContent></Card>
+            ))
+          ) : (
+            <>
+              <IntegrationCard label="Cloudinary" description="Image storage & CDN" icon={Cloud} integration={get('cloudinary')} retestUrl="/api/integrations/cloudinary/revalidate" />
+              <IntegrationCard label="Resend" description="Email delivery" icon={Mail} integration={get('resend')} retestUrl="/api/integrations/resend/revalidate" />
+              <GitHubCard integration={get('github')} />
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -24,6 +24,7 @@ import {
   Link as LinkIcon,
   Plug,
   X,
+  BookOpen,
 } from 'lucide-react';
 import type { Profile } from '@/lib/models/portfolio';
 
@@ -112,24 +113,18 @@ export function AdminSidebar({ profile, onLogout, mobileOpen = false, onMobileCl
 
   const isGroupActive = (group: NavGroup) => group.items.some(isItemActive);
 
-  // Default open state: open if group has active child OR it's the Content group (default open)
-  const initOpen = (group: NavGroup) =>
-    isGroupActive(group) || group.label === 'Content';
+  // Only one temporary submenu open at a time; active group is always open.
+  const [tempOpenGroup, setTempOpenGroup] = useState<string | null>(null);
 
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    const state: Record<string, boolean> = {};
-    NAV.forEach((entry) => {
-      if (entry.type === 'group') state[entry.group.label] = initOpen(entry.group);
-    });
-    return state;
-  });
-
-  const toggleGroup = (label: string) =>
-    setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
+  const toggleGroup = (label: string) => {
+    const entry = NAV.find((e) => e.type === 'group' && e.group.label === label);
+    if (!entry || entry.type !== 'group') return;
+    if (isGroupActive(entry.group)) return; // active group stays open, cannot be closed
+    setTempOpenGroup((prev) => (prev === label ? null : label));
+  };
 
   const isSingleLinkActive = (item: NavItem) => {
     if (item.href === '/protected') return pathname === '/protected';
-    if (item.href === '/protected/media-library') return pathname === '/protected/media-library';
     return pathname === item.href;
   };
 
@@ -206,7 +201,7 @@ export function AdminSidebar({ profile, onLogout, mobileOpen = false, onMobileCl
           const { group } = entry;
           const GroupIcon = group.icon;
           const groupActive = isGroupActive(group);
-          const isOpen = openGroups[group.label] ?? false;
+          const isOpen = isGroupActive(group) || tempOpenGroup === group.label;
 
           return (
             <div key={group.label}>
@@ -254,6 +249,20 @@ export function AdminSidebar({ profile, onLogout, mobileOpen = false, onMobileCl
             </div>
           );
         })}
+
+        {/* Documentation — nav link */}
+        <button
+          onClick={() => handleNavClick('/protected/docs')}
+          className={cn(
+            'w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors',
+            pathname === '/protected/docs'
+              ? 'bg-primary text-primary-foreground font-medium'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+          )}
+        >
+          <BookOpen className="h-4 w-4 shrink-0" />
+          Documentation
+        </button>
       </nav>
 
       {/* Footer */}
