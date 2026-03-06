@@ -1,3 +1,6 @@
+export const dynamic = 'force-static';
+export const dynamicParams = true;
+
 import type { Metadata } from 'next';
 import { getCachedPortfolio } from '@/lib/cache/portfolio-cache';
 import { ProjectDetailClient } from '@/components/portfolio/project-detail-client';

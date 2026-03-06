@@ -7,13 +7,12 @@ import { getCachedPortfolio } from '@/lib/cache/portfolio-cache';
 import { filterPublishedData } from '@/lib/utils/portfolio-helpers';
 
 interface HomePageProps {
-  isAdmin: boolean;
   forceDevMode: boolean;
   missingVars: string[];
   isEmailConfigured?: boolean;
 }
 
-export default async function HomePage({ forceDevMode, missingVars, isAdmin, isEmailConfigured = false }: HomePageProps) {
+export default async function HomePage({ forceDevMode, missingVars, isEmailConfigured = false }: HomePageProps) {
 
   // ── Development mode (ENVIRONMENT=development or missing critical vars) ──
   if (forceDevMode) {
@@ -43,39 +42,13 @@ export default async function HomePage({ forceDevMode, missingVars, isAdmin, isE
       );
     }
 
-    // ENVIRONMENT=development, vars are fine — visitors see Coming Soon
-    if (!isAdmin) {
-      return <ComingSoonPage />;
-    }
-
-    // Admin in dev mode sees the env dashboard
-    return (
-      <main className="min-h-screen flex flex-col items-center">
-        <div className="flex-1 w-full flex flex-col gap-20 items-center">
-          <NavBarWrapper />
-          <div className="flex-1 flex flex-col gap-12 max-w-5xl p-5 w-full">
-            <EnvProcessValidator missingVars={missingVars} forceDevMode={forceDevMode} />
-            <section className="text-center space-y-4 py-8 border rounded-lg p-6 bg-muted/50">
-              <h2 className="text-2xl font-bold">Development Mode</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Your portfolio is live internally. Remove{' '}
-                <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">ENVIRONMENT=development</code>{' '}
-                from your environment variables (or set it to any other value) to publish.
-              </p>
-            </section>
-          </div>
-          <footer className="w-full flex items-center justify-center border-t text-center text-xs gap-8 py-16">
-            <p>Portfolio — Development Mode</p>
-            <ThemeSwitcher />
-          </footer>
-        </div>
-      </main>
-    );
+    // ENVIRONMENT=development, vars are fine — show Coming Soon page
+    return <ComingSoonPage />;
   }
 
   // ── Published mode ────────────────────────────────────────────────────────
   const raw = await getCachedPortfolio();
-  const filteredData = filterPublishedData(raw, isAdmin);
-  return <PublishedPortfolio isAdmin={isAdmin} isEmailConfigured={isEmailConfigured} data={filteredData} />;
+  const filteredData = filterPublishedData(raw, false);
+  return <PublishedPortfolio isEmailConfigured={isEmailConfigured} data={filteredData} />;
 }
 

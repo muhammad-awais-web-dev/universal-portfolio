@@ -14,12 +14,11 @@ import { TestimonialsSection } from '@/components/portfolio/testimonials-section
 const VISIBLE_LIMIT = 6;
 
 interface PublishedPortfolioProps {
-  isAdmin: boolean;
   isEmailConfigured?: boolean;
   data: PortfolioData;
 }
 
-export function PublishedPortfolio({ isAdmin, isEmailConfigured = false, data }: PublishedPortfolioProps) {
+export function PublishedPortfolio({ isEmailConfigured = false, data }: PublishedPortfolioProps) {
 
   const projects = data.projects || [];
   const experiences = data.experiences || [];

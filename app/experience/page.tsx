@@ -1,3 +1,5 @@
+export const dynamic = 'force-static';
+
 import { getCachedPortfolio } from '@/lib/cache/portfolio-cache';
 import { ExperienceClient } from '@/components/portfolio/experience-client';
 import { Experience } from '@/lib/models/portfolio';

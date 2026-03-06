@@ -1,3 +1,5 @@
+export const dynamic = 'force-static';
+
 import { getCachedPortfolio } from '@/lib/cache/portfolio-cache';
 import { CertificationsClient } from '@/components/portfolio/certifications-client';
 

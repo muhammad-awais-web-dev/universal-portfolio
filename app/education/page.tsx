@@ -1,3 +1,5 @@
+export const dynamic = 'force-static';
+
 import { getCachedPortfolio } from '@/lib/cache/portfolio-cache';
 import { EducationClient } from '@/components/portfolio/education-client';
 import { Education } from '@/lib/models/portfolio';
